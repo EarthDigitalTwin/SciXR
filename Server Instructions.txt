@@ -1,0 +1,9 @@
+Script changes:
+- In MyService.asmx (SciXR/Webserver): Change the line [WebService(Namespace = "...")] so that the URL is "https://(your IP address):9000/"
+- In MyService.cs (SciXR/Assets/WebClient): Anywhere that it occurs in the script, change 192.168.1.32 to be your IP address 
+
+To start the server: Change directory in the command line to the WebServer folder and run the command "xsp" (might need to install Mono).  It should say that the server is listening on port 9000, but if it is a different port, then change the port in the above scripts to match and it should still work.
+
+To test if it works, go to (your IP address):9000/MyService.asmx in a browser.  It should load and display several methods in a box on the left.  You can click on the methods and go to "test form" to invoke the methods and test if they work.  When you invoke a method, the command line should output that it received a request for the desired method, too.
+
+To change or add files that are loaded by the server, go to the SciXR/Webserver folder and change the files in the Data folder.  Note that Colorbars must be in the Data folder, and that .ply files currently take a long time to load and will sometimes prevent data from showing up when you try to load it in the game, so the folder currently only has .js files.
