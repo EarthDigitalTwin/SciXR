@@ -192,6 +192,15 @@ public class MeshVRControls : MonoBehaviour {
         title.SetText(data.identifier);
         uom.SetText("No Units Specified");
 
+        //InputField units = GameObject.Find("Units")?.GetComponent<InputField>();
+        //InputField units1 = InputField.FindWithTag("Units");
+        // GameObject units2 = GameObject.FindWithTag("Units");
+        // Text units1 = units2.GetComponentInChildren<Text>();
+
+        // Debug.Log("units2: " + units2);
+        // Debug.Log("units1: " + units1 + "| " + units1.text);
+        // uom.SetText(units1.text);
+
         float min = data.ColorMin;
         float max = data.ColorMax;
         GlobeExtras ge = GetComponentInParent<GlobeExtras>();

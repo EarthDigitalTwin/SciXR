@@ -1,0 +1,239 @@
+v1.26
+------------------------------------------------------------------------------
+- Added the option to set the width and padding of the Previous/Next Year/Month
+  button cells
+  (Config -> Header -> Buttons -> Month Button Cell Width)
+  (Config -> Header -> Buttons -> Year Button Cell Width)
+
+- Added the option to toggle the 'Preserve Aspect' property for the
+  Previous/Next Year/Month buttons
+
+- Fixed a bug where non-interactable buttons (next/previous) could still be
+  used
+- Fixed a bug where it was possible for the next/previous year buttons
+  could select a month outside of the Date Range limit
+------------------------------------------------------------------------------
+
+v1.25
+------------------------------------------------------------------------------
+- Added the option to prohibit specific dates from selection
+  (Config -> Date Range -> Prohibited Dates)
+- Added the option to prohibit specific days from selection
+  (Config -> Date Range -> Permitted Week Days)
+------------------------------------------------------------------------------
+
+v1.24
+------------------------------------------------------------------------------
+- Added more options for font size customization (min, max, auto sizing)
+- Fixed a bug where adjusting the header height wouldn't immediately update
+  in Unity 2019.2
+------------------------------------------------------------------------------
+
+
+v1.23
+------------------------------------------------------------------------------
+- Added the GetDayButtons() method which allows you to retrrieve references
+  to the day buttons in the DatePicker, optionally filtering by a specific
+  type (e.g. SelectedDay/CurrentMonth/OtherMonth)
+- Added the GetDayButton(DateTime date) which allows you to retrieve a reference
+  to a specific day button
+- Added the GetSerializedConfiguration() method which returns a string
+  representing the configuration of the DatePicker which you can then save
+- Added the SetConfigFromJsonString() which allows you to set the configuration
+  of the DatePicker based on a serialized string
+- DatePicker will now re-use the existing TableLayout structure where possible
+  when updating its layout rather than recreating rows and cells
+- Note: Button templates are no longer guaranteed to be invalidated when
+  DatePicker is first initialized in Play mode - if you make changes to the
+  templates, be sure to click the Invalidate Button Templates button.
+- Fixed an issue where sometimes, for some reason, .NET's DateTimeFormatInfo
+  had a blank entry in AbbreviatedDayNames on Android (by stripping out
+  the blank entry before using the day names collection)
+------------------------------------------------------------------------------
+
+v1.22
+------------------------------------------------------------------------------
+- DatePicker Prefabs now have TextMesh Pro instead of 'Text' components,
+  as such the in-place upgrade process will no longer execute on new
+  DatePicker instances created from the prefabs.
+- Suppressed some compiler warning messages about old fields not being populated
+------------------------------------------------------------------------------
+
+v1.21
+------------------------------------------------------------------------------
+- Fixed an issue where day button colors were not being applied in more
+  recent versions of Unity
+------------------------------------------------------------------------------
+
+v1.20
+------------------------------------------------------------------------------
+- All Text fields will now be automatically replaced with TextMesh Pro fields
+  This process will attempt to preserve whatever styles you may have been using;
+  but may not be perfect. Some small adjustments may be required.
+- Dropped support for versions of Unity older than 2018.2
+- Fixed some issues with Shared Calendars for multiple Input Fields
+------------------------------------------------------------------------------
+
+v1.19
+------------------------------------------------------------------------------
+- Added the Enable()/Disable() methods to DatePicker. Disable() will disable
+  (but not hide) the DatePicker by preventing it from responding to pointer
+  events. Enable() will cause it to resume responding to such events.
+------------------------------------------------------------------------------
+
+v1.18
+------------------------------------------------------------------------------
+- The Next/Previous Year/Month buttons now work when holding them down,
+  rather than just when they are pushed. The longer you hold them down for,
+  the faster DatePicker will move forward/backward through the months/years
+- Fixed the DatePicker_DateRange Prefab such that the Next/Previous Year
+  buttons now correctly switch years rather than months
+------------------------------------------------------------------------------
+
+v1.17
+------------------------------------------------------------------------------
+- Updated to TableLayout v1.12
+------------------------------------------------------------------------------
+
+V1.16
+------------------------------------------------------------------------------
+- Made an adjustment to DatePicker's initial setup so that it will always
+  execute at least once, even if the DatePicker is deactivated before the end
+  of its first active frame.
+------------------------------------------------------------------------------
+
+V1.15
+------------------------------------------------------------------------------
+- Updated TableLayout to v1.11 (fixing a positioning issue in 2017.3)
+------------------------------------------------------------------------------
+V1.14
+------------------------------------------------------------------------------
+- Updated TableLayout to v1.09
+------------------------------------------------------------------------------
+
+V1.13
+------------------------------------------------------------------------------
+- Updated TableLayout to v1.08
+- Added a workaround to an exception on iOS when applying configuration
+  values
+------------------------------------------------------------------------------
+
+V1.12
+------------------------------------------------------------------------------
+- Introduced object pooling for day buttons, markedly improving performance.
+  If you make any changes to button templates, you should either click the
+  'Invalidate Button Templates' button, or call
+  datePicker.InvalidateDayButtonTemplate(type)
+  or datePicker.InvalidateAllDayButtonTemplates() at runtime, this will reset
+  the pool so that new buttons can be made using the updated template(s).
+------------------------------------------------------------------------------
+
+V1.11
+------------------------------------------------------------------------------
+- Added the SerializeableDate.ToDateString() extension method to the UI.Dates
+  namespace - you can use this instead of SerializeableDate.date.ToDateString()
+- Added a new optional Week Numbers column, to activate this, use the
+  Config -> Week Days -> Show Week Numbers property.
+- Added 'Next Year' and 'Previous Year' buttons to the in-editor Calendar
+------------------------------------------------------------------------------
+
+V1.10
+------------------------------------------------------------------------------
+- Fixed a bug in the 'DatePicker - Date Range' prefab which caused the
+  DatePickers to open individually when the input fields were clicked instead
+  of both opening together.
+- Added the ability to select multiple dates at once (can be used with all
+  normal DatePickers as well as a Shared DatePicker instance, although it
+  is not compatible with Date Range selection)
+------------------------------------------------------------------------------
+
+V1.09
+------------------------------------------------------------------------------
+- You can now control the font size of week day headers and day buttons
+  through the use of the new 'Week Days -> Text -> Font Size' and
+  'Days -> Font Size' properties.
+- Fixed a positioning issue in 'Screen Space - Overlay' mode.
+------------------------------------------------------------------------------
+
+V1.08
+------------------------------------------------------------------------------
+- The next/previous year buttons will now be disabled if they would lead
+  to a date which exceeds the available date range (as per the next/previous
+  month buttons).
+- Fixed some display issues in World Space mode.
+- Updated TableLayout to V1.07
+------------------------------------------------------------------------------
+
+V1.07
+------------------------------------------------------------------------------
+- New 'Shared Calendar' menu items added. You can now create multiple
+  popup DatePickers that share a single DatePicker calendar instance.
+  This may improve performance in applications which use a lot of DatePicker fields
+  simultaneously.
+
+  To use this:
+  1. Use the 'UI/DatePicker/Shared Calendar/Shared Calendar' menu item
+     to create the calendar object that will be used by all of your DatePicker
+	 popups. You can customise this as you wish. NOTE: It will be disabled by
+	 by default, you will need to enable it to view the changes you make in the
+	 editor. You should then disable it again before entering play mode.
+  2. Use the 'UI/DatePicker/Shared Calendar/DatePicker - Popup (Shared Calendar)'
+     menu item to create as many input fields as you wish.
+  3. On each input field, set the 'Ref_SharedDatePicker' property to the
+     calendar created in step (1). The input fields support multi-object editing,
+	 so you can do this in bulk. You can also do this in code, provided that the
+	 property is populated before the user can click on the DatePicker to select
+	 a date.
+- Updated TableLayout to v1.06
+------------------------------------------------------------------------------
+
+
+V1.06
+------------------------------------------------------------------------------
+- Popup DatePickers should now work better in Screen Space - Camera canvas
+  render mode
+- Fixed a bug where the Toggle Button width would not always automatically update
+  when the width value was changed
+------------------------------------------------------------------------------
+
+V1.05
+------------------------------------------------------------------------------
+- Fixed an exception which was sometimes occurring in the inspector
+- Added a new property which controls how the Visible Date is determined
+  during initialization.
+- The Inline DatePicker prefab no longer has a date selected by default
+------------------------------------------------------------------------------
+
+V1.04
+------------------------------------------------------------------------------
+- Updated TableLayout to V1.03
+------------------------------------------------------------------------------
+
+V1.03
+------------------------------------------------------------------------------
+- Added new options to Config -> Sizing which allow you to control the width
+  of the DatePicker itself independently of the input field in Popup DatePickers
+- Added a new option to Config -> Input Field which allows you to control
+  the positioning of the DatePicker relative to the Input Field container
+  (Specifically, Left-aligned, Center-aligned, and Right-aligned). This will only
+  have a visible effect if the DatePicker's width has been set (as above).
+------------------------------------------------------------------------------
+
+V1.02
+------------------------------------------------------------------------------
+- Fixed a bug when using very high (or very low) resolutions which prevented
+  DatePicker popups from appearing in the correct location relative to their
+  InputField
+------------------------------------------------------------------------------
+
+V1.01
+------------------------------------------------------------------------------
+- Added the ToDate and FromDate properties to DatePicker_DateRange to make it
+  easier to configure
+- Made a few minor adjustments to improve optional integration with XmlLayout.
+------------------------------------------------------------------------------
+
+V1.00
+------------------------------------------------------------------------------
+- Initial Release
+------------------------------------------------------------------------------

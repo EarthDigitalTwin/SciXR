@@ -1,0 +1,13 @@
+sdap_url: "https://ideas-digitaltwin.jpl.nasa.gov/nexus"
+variables: 
+  -"CO"
+units: "mm"
+dataset: "TROPOMI_CO_global"
+identifier: "tropomi"
+description: ""
+instrument: ""
+bbox: {'min_lon': -180, 'max_lon':  180, 'min_lat':  -90, 'max_lat':  90}
+start_time: "2023-06-06"
+end_time: "2023-06-08"
+label_time: "2023-06-06"
+interpolation: 1
