@@ -21,9 +21,9 @@
     <UnityCurrentPlatform>WSA</UnityCurrentPlatform>
     <UnityCurrentTargetFramework>net46</UnityCurrentTargetFramework>
     
-    <UnityMajorVersion>2019</UnityMajorVersion>
-    <UnityMinorVersion>2</UnityMinorVersion>
-    <UnityEditorInstallPath>C:\Program Files\Unity\Hub\Editor\2019.2.3f1\Editor</UnityEditorInstallPath>
+    <UnityMajorVersion>2020</UnityMajorVersion>
+    <UnityMinorVersion>1</UnityMinorVersion>
+    <UnityEditorInstallPath>C:\Program Files\Unity\Hub\Editor\2020.1.17f\Editor</UnityEditorInstallPath>
   </PropertyGroup>
   
   <PropertyGroup>
