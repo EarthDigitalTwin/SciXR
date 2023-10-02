@@ -7,83 +7,17 @@ using Debug = UnityEngine.Debug;
 
 public class PLYReader {
 
-    public static SerialFile MetadataFromPath(string path)
-    {
+    public static SerialFile MetadataFromPath(string path) {
         SerialFile dataFile = new SerialFile();
 
         dataFile.fileName = Path.GetFileName(path);
-        //if (path.LastIndexOf("\\") > 0)
-        //    dataFile.fileName = path.Substring(0, path.LastIndexOf("\\"));
-        //else
-        //    dataFile.fileName = path;
-
         dataFile.path = path;
         dataFile.lastModified = File.GetLastWriteTime(path);
         // Init bools
         dataFile.hasResults = false;
-        dataFile.hasOverlay = false;
+        dataFile.hasOverlay = false; 
 
-        string[] plyOutput = File.ReadAllLines(path);//ClientObject.GetFile(path);
-        // Get vertex count
-        foreach (string currentLine in plyOutput)
-        {
-            string[] items = currentLine.Split(null, 3);
-            if (items != null && items.Length > 0)
-            {
-                switch (items[0])
-                {
-                    case "comment":
-                        if (items[1] == "identifier:")
-                            dataFile.identifier = items[2];
-                        if (items[1] == "description:")
-                            dataFile.description = items[2];
-                        if (items[1] == "instrument:")
-                            dataFile.instrument = items[2];
-                        if (items[1] == "time:")
-                            dataFile.time = items[2];
-                        if (items[1] == "variable:")
-                            dataFile.variable = items[2];
-                        if (items[1] == "x_label:")
-                            dataFile.x_label = items[2];
-                        if (items[1] == "y_label:")
-                            dataFile.y_label = items[2];
-                        if (items[1] == "z_label:")
-                            dataFile.z_label = items[2];
-                        if (items[1] == "val_label:")
-                            dataFile.val_label = items[2];
-                        if (items[1] == "min_val:")
-                            dataFile.min = float.Parse(items[2]);
-                        if (items[1] == "max_val:")
-                            dataFile.max = float.Parse(items[2]);
-                        break;
-                    case "element":
-                        if (items[1] == "vertex")
-                            dataFile.vertexCount = int.Parse(items[2]);
-                        if (items[1] == "face")
-                            dataFile.triangleCount = int.Parse(items[2]);
-                        break;
-                }
-            }
-
-
-            if (items[0] == "end_header")
-                break;
-        }
-        dataFile.type = SerialData.DataType.pointcloud;
-        if (dataFile.identifier == null || dataFile.identifier.Trim() == "")
-        {
-            dataFile.identifier = dataFile.fileName;
-        }
-        Debug.Log(dataFile.identifier);
-        return dataFile;
-    }
-
-    public static void MetadataFromSerialFile(SerialFile dataFile) {
-        // Init bools
-        dataFile.hasResults = false;
-        dataFile.hasOverlay = false;
-
-        string[] plyOutput = File.ReadAllLines(dataFile.path);//ClientObject.GetFile(dataFile.path);
+        string[] plyOutput = File.ReadAllLines(path);
         // Get vertex count
         foreach (string currentLine in plyOutput) {
             string[] items = currentLine.Split(null, 3);
@@ -127,12 +61,15 @@ public class PLYReader {
                 break;
         }
         dataFile.type = SerialData.DataType.pointcloud;
+        if (dataFile.identifier == null || dataFile.identifier.Trim() == "")
+            dataFile.identifier = Path.GetFileName(path);
         Debug.Log(dataFile.identifier);
+        return dataFile;
     }
 
     public static SerialData ReadModelFromPath(string path, SerialFile dataFile, DataObject dataObject, float loadWeight) {
         SerialData data = new SerialData();
-        string[] plyOutput = File.ReadAllLines(path);//ClientObject.GetFile(path);
+        string[] plyOutput = File.ReadAllLines(path);
         if (dataFile == null)
             dataFile = MetadataFromPath(path);
 
@@ -181,16 +118,11 @@ public class PLYReader {
             z.Add(float.Parse(items[2]));
             val.Add(float.Parse(items[3]));
 
-            if (dataObject != null)
-            {
-                if (line % 1000 == 0 || line == plyOutput.Length - 1)
-                {
-                    ThreadManager.instance.callbacks.Add(() => {
-                        dataObject.UpdateLoadPercent((float)line / plyOutput.Length * loadWeight, "Parsing File");
-                    });
-                }
+            if (line % 1000 == 0 || line == plyOutput.Length - 1) {
+                ThreadManager.instance.callbacks.Add(() => {
+                    dataObject.UpdateLoadPercent((float)line / plyOutput.Length * loadWeight, "Parsing File");
+                });
             }
-            
             line++;
 
         }

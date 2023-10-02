@@ -5,10 +5,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using VRTK;
 using Text = TMPro.TMP_Text;
 
 public class FileLoadObject : MonoBehaviour{
-    
+
     public SerialFile file;
     public float fadeTime = 0.4f;
 
@@ -25,13 +26,27 @@ public class FileLoadObject : MonoBehaviour{
     public GameObject pointCloudIcon;
     public GameObject newIcon;
 
+    [HideInInspector] public VRTK_SnapDropZone assignedDropzone;
+    VRTK_InteractableObject io;
+    VRTK_Pointer[] pointers;
     PointerEventData lastEventData;
     FileLoadMenu menu;
     GameObject currentIcon;
 
     private void Start() {
         menu = GetComponentInParent<FileLoadMenu>();
+        io = GetComponent<VRTK_InteractableObject>();
+        pointers = FindObjectsOfType<VRTK_Pointer>();
+        foreach(VRTK_Pointer pointer in pointers) {
+            pointer.DestinationMarkerEnter += OnVRPointerEnter;
+            pointer.DestinationMarkerExit += OnVRPointerExit;
+            pointer.DestinationMarkerHover += OnVRPointerClick;
+        }
     }
+
+    //void OnEnable() {
+
+    //}
 
     public void FadeIn() {
         // Fade in base
@@ -65,6 +80,17 @@ public class FileLoadObject : MonoBehaviour{
         
         // Fade out base
         LeanTween.alpha(fileBase.gameObject, 0, disableTime).setOnComplete(() => { gameObject.SetActive(false); });
+    }
+
+
+    private void OnDestroy() {
+        if(pointers != null) {
+            foreach (VRTK_Pointer pointer in pointers) {
+                pointer.DestinationMarkerEnter -= OnVRPointerEnter;
+                pointer.DestinationMarkerExit -= OnVRPointerExit;
+                pointer.DestinationMarkerHover -= OnVRPointerClick;
+            }
+        }
     }
 
     public void RefreshMetadata() {
@@ -140,7 +166,7 @@ public class FileLoadObject : MonoBehaviour{
     }
 
     // VR pointer handling
-    /*
+
     private void OnVRPointerEnter(object sender, DestinationMarkerEventArgs e) {
         if (e.target == this.transform) {
             OnPointerEnter(null);
@@ -152,7 +178,6 @@ public class FileLoadObject : MonoBehaviour{
             OnPointerExit(null);
         }
     }
-    
 
     bool isClicked = false;
     bool frameClick = false;
@@ -169,24 +194,6 @@ public class FileLoadObject : MonoBehaviour{
             OnPointerClick(null);
             frameClick = false;
         }
-    }
-    */
-    #region Pointer Handling
-
-    // AR pointer handling
-    public void OnARPointerEnter()
-    {
-        OnPointerEnter(null);
-    }
-
-    public void OnARPointerExit()
-    {
-        OnPointerExit(null);
-    }
-
-    public void OnARPointerClick()
-    {
-        LoadData();
     }
 
     // Screen space pointing handling 
@@ -210,8 +217,6 @@ public class FileLoadObject : MonoBehaviour{
         //    GetComponentInParent<FileObjectMenu>().gameObject.SetActive(false);
         //}
     }
-
-    #endregion
 
     public void LoadData(bool autoPosition = true) {
         metadata.gameObject.SetActive(false);
@@ -237,6 +242,6 @@ public class FileLoadObject : MonoBehaviour{
         }
         menu.BeginDisable();
         DataLoader.instance.CreateDataObject(file, position, eulerAnglers);
+        
     }
-    
 }

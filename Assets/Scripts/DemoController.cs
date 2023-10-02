@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Linq;
 
 public class DemoController : MonoBehaviour {
-    /*
+
     DataLoader dataLoader;
 
     // Use this for initialization
@@ -22,5 +22,4 @@ public class DemoController : MonoBehaviour {
         //dataLoader.CreateDataObject(slr, new Vector3(0, 1, 0), Vector3.zero);
         VRTK.VRTK_SDKManager.instance.LoadedSetupChanged -= AutoLoadFiles;
     }
-    */
 }

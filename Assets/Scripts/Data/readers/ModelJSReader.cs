@@ -20,85 +20,17 @@ public class ModelJSReader {
 
     static List<string> commonVariables = new List<string> {"Surface","Base","geometry.base","geometry.surface","geometry.bed"};
 
-    public static SerialFile MetadataFromPath(string path)
-    {
+    public static SerialFile MetadataFromPath(string path) {
         SerialFile dataFile = new SerialFile();
 
         dataFile.fileName = Path.GetFileName(path);
-        //if (path.LastIndexOf("\\") > 0)
-        //    dataFile.fileName = path.Substring(path.LastIndexOf("\\") + 1);
-        //else
-        //    dataFile.fileName = path;
-
-        Debug.Log("MetadataFromPath: " + dataFile.fileName);
-
         dataFile.path = path;
         dataFile.lastModified = File.GetLastWriteTime(path);
         // Init bools
         dataFile.hasResults = false;
-        dataFile.hasOverlay = false;
+        dataFile.hasOverlay = false; 
 
-        string[] jsOutput = File.ReadAllLines(path);//ClientObject.GetFile(path);
-        
-        bool typeSet = false;
-
-        var sr = File.CreateText(dataFile.fileName);
-
-        // Get vertex count
-        foreach (string currentLine in jsOutput)
-        {
-            sr.WriteLine(currentLine);
-            int equalSignIndex = currentLine.IndexOf('=');
-            int dotIndex = currentLine.IndexOf('.');
-            if (dotIndex != -1)
-            {
-                string label = currentLine.Substring(dotIndex + 1, equalSignIndex - dotIndex - 1);
-
-                string extractedJSONString = currentLine.Substring(equalSignIndex + 1).TrimEnd(';');
-                switch (label)
-                {
-                    case "miscellaneous.name":
-                        dataFile.identifier = ToTitleCase(extractedJSONString.Trim(new char[] { '\'', '\"' }));
-                        break;
-                    case "mesh.numberofvertices":
-                        dataFile.vertexCount = int.Parse(extractedJSONString);
-                        break;
-                    case "mesh.numberofelements":
-                        dataFile.triangleCount = int.Parse(extractedJSONString);
-                        break;
-                    case "mesh.z":
-                        typeSet = true;
-                        dataFile.type = SerialData.DataType.globe;
-                        break;
-                    case "priv.runtimename":
-                        dataFile.runtimeName = extractedJSONString.Trim(new char[] { '\'', '\"' });
-                        break;
-                    case "miscellaneous.notes":
-                        dataFile.notes = extractedJSONString.Trim(new char[] { '\'', '\"' });
-                        break;
-                    case "radaroverlay.outerx":
-                        dataFile.hasOverlay = true;
-                        break;
-                    case "results":
-                        dataFile.hasResults = true;
-                        break;
-                }
-            }
-        }
-        sr.Close();
-        if (!typeSet)
-            dataFile.type = SerialData.DataType.flat;
-        if (dataFile.identifier == null || dataFile.identifier.Trim() == "")
-            dataFile.identifier = dataFile.fileName;
-        return dataFile;
-    }
-
-    public static void MetadataFromSerialFile(SerialFile dataFile) {
-        // Init bools
-        dataFile.hasResults = false;
-        dataFile.hasOverlay = false;
-
-        string[] jsOutput = File.ReadAllLines(dataFile.path);//ClientObject.GetFile(dataFile.path);
+        string[] jsOutput = File.ReadAllLines(path);
         bool typeSet = false;
 
         // Get vertex count
@@ -140,12 +72,14 @@ public class ModelJSReader {
         }
         if (!typeSet)
             dataFile.type = SerialData.DataType.flat;
+        if (dataFile.identifier == null || dataFile.identifier.Trim() == "")
+            dataFile.identifier = Path.GetFileName(path);
+        return dataFile;
     }
 
     public static SerialData ReadModelFromPath(string path, SerialFile dataFile, DataObject dataObject, float loadWeight) {
         SerialData data = new SerialData();
-        //Debug.Log("Starting file read...");
-        string[] jsOutput = File.ReadAllLines(dataFile.path);//ClientObject.GetFile(dataFile.path);
+        string[] jsOutput = File.ReadAllLines(path);
         if (dataFile == null)
             dataFile = MetadataFromPath(path);
 
@@ -206,13 +140,9 @@ public class ModelJSReader {
                     //TODO add prop handling
                     data.props[label] = currentLine;
                 }
-                if (dataObject != null)
-                {
-                    ThreadManager.instance.callbacks.Add(() => {
-                        dataObject.UpdateLoadPercent((float)line / jsOutput.Length * loadWeight, "Parsing File");
-                    });
-                }
-
+                ThreadManager.instance.callbacks.Add(() => {
+                    dataObject.UpdateLoadPercent((float)line / jsOutput.Length * loadWeight, "Parsing File");
+                });
                 line++;
             }
         }

@@ -3,7 +3,6 @@ using UnityEngine;
 using System.Linq;
 using Debug = UnityEngine.Debug;
 using Proj4Net;
-using UnityEngine.Networking;
 
 public class OverlayLoader
 {
@@ -78,17 +77,10 @@ public class OverlayLoader
 
         Texture2D texture;
         texture = new Texture2D(2048, 2048/scale);
-        using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(request.Url))
+        using (WWW www = new WWW(request.Url))
         {
-            yield return www.SendWebRequest();
-            if (www.isNetworkError || www.isHttpError)
-            {
-                Debug.Log(www.error);
-            }
-            else
-            {
-                texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-            }
+            yield return www;
+            www.LoadImageIntoTexture(texture);
             material.SetTexture("_MainTex", texture);
         }
     }

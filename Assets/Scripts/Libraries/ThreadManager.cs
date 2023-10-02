@@ -19,8 +19,7 @@ public class ThreadManager : MonoBehaviour
             while (callbacks.Count > 0) {
                 Action function = callbacks[0];
                 callbacks.RemoveAt(0);
-                if (function != null)
-                    function();
+                function();
             }
         }
     }

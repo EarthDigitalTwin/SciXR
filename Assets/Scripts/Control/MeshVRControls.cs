@@ -2,11 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using VRTK;
 using Text = TMPro.TMP_Text;
 using Dropdown = TMPro.TMP_Dropdown;
 
 public class MeshVRControls : MonoBehaviour {
-    
     [Header("Containers")]
     public GameObject animationContainer;
     public GameObject earthLocator;
@@ -31,7 +31,7 @@ public class MeshVRControls : MonoBehaviour {
     //public Slider zScaleSlider;
 
     [Header("Color References")]
-    public ARDropdown colorbarDropdown;
+    public Dropdown colorbarDropdown;
     public RawImage colorbarPreview;
     public RawImage colorbarScalePreview;
     public Slider colorModeMinSlider;
@@ -60,13 +60,13 @@ public class MeshVRControls : MonoBehaviour {
     //    }
     //}
 
-    //private VRTK_InteractableObject inter;
+    private VRTK_InteractableObject inter;
 
     // Use this for initialization
     void Start () {
 		data = GetComponentInParent<DataObject>();
-        // inter = GetComponent<VRTK_InteractableObject>();
-        // inter.InteractableObjectUngrabbed += OnScaleUngrab;
+        inter = GetComponent<VRTK_InteractableObject>();
+        inter.InteractableObjectUngrabbed += OnScaleUngrab;
         foreach (GameObject obj in emissionObjects) {
             Material mat = obj.GetComponent<Renderer>().material;
             if (mat != null)
@@ -74,28 +74,24 @@ public class MeshVRControls : MonoBehaviour {
         }
         // Refresh UI with minimum info then again after init complete
         RefreshUI();
-        data.OnInitComplete.AddListener(data.SetUpColorbars);
+        data.OnInitComplete.AddListener(UpdateColorbarDropdown);
         data.OnInitComplete.AddListener(RefreshUI);
 	}
 
-    /*
     private void OnScaleUngrab(object sender, InteractableObjectEventArgs e) {
         //Debug.Log(inter.GetSecondaryGrabbingObject());
     }
-    */
 
-    /*
     public void UpdateColorbarDropdown() {
-        colorbarDropdown.options.Clear();
+        colorbarDropdown.ClearOptions();
         List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
         
         foreach (Colorbar colorbar in DataLoader.instance.presetColorbars) {
             Sprite newSprite = Sprite.Create(colorbar.texture as Texture2D, new Rect(0.0f, 0.0f, colorbar.texture.width, colorbar.texture.height), new Vector2(0.5f, 0.5f), 100.0f);
             options.Add(new Dropdown.OptionData(colorbar.name, newSprite));
         }
-        colorbarDropdown.options = options;
+        colorbarDropdown.AddOptions(options);
     }
-    */
 
     public void RefreshUI() {
         // Set top label
@@ -135,7 +131,6 @@ public class MeshVRControls : MonoBehaviour {
             numSteps = data.data.results.Count;
         }
 
-        /*
         string hasAnimation = "No";
         if (animateExtrude && animateColor) {
             hasAnimation = "Extrude and Color";
@@ -146,7 +141,6 @@ public class MeshVRControls : MonoBehaviour {
         else if (animateExtrude) {
             hasAnimation = "Extrude";
         }
-        */
 
         //metadataText.text =
         //    "<b>Number of Vertices:</b> " + numVerts + "\n" +
@@ -178,17 +172,10 @@ public class MeshVRControls : MonoBehaviour {
         }
 
         //Set colorbar preview
-        if (data.currentColorbar != null)
-        {
-            if (colorbarPreview != null)
-            {
-                    colorbarPreview.material = data.materialUI;
-                    colorbarPreview.texture = data.currentColorbar.texture;
-            }
-            colorbarScalePreview.texture = data.currentColorbar.texture;
-        }
+        colorbarPreview.material = data.materialUI;
+        colorbarPreview.texture = data.currentColorbar.texture;
         colorbarScalePreview.material = data.materialUI;
-        
+        colorbarScalePreview.texture = data.currentColorbar.texture;
 
         //Finalize legend
         UpdateLegend();
@@ -196,8 +183,7 @@ public class MeshVRControls : MonoBehaviour {
 
     private void UpdateLegend() {
         RawImage colorbarImage = legendCanvas.GetComponentInChildren<RawImage>();
-        if (data.currentColorbar != null)
-            colorbarImage.texture = data.currentColorbar.texture;
+        colorbarImage.texture = data.currentColorbar.texture;
         colorbarImage.material = data.materialUI;
 
         Text[] tickvals = legendCanvas.transform.Find("Ticks").GetComponentsInChildren<Text>();
@@ -253,13 +239,13 @@ public class MeshVRControls : MonoBehaviour {
 
     public void LockBaseToggle(bool status) {
         if(status) {
-            //inter.isGrabbable = false;
+            inter.isGrabbable = false;
             foreach (Material mat in emissionMaterials) {
                 mat.SetColor("_EmissionColor", Color.red);
             }
         }
         else {
-            //inter.isGrabbable = true;
+            inter.isGrabbable = true;
             foreach (Material mat in emissionMaterials) {
                 mat.SetColor("_EmissionColor", Color.white);
             }
@@ -344,5 +330,4 @@ public class MeshVRControls : MonoBehaviour {
     //        colorModeRangeSlider.onValueChanged.Invoke(colorModeRangeSlider.value);
     //    }
     //}
-    
 }

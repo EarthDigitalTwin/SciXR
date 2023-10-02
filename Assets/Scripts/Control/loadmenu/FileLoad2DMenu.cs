@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 using Dropdown = TMPro.TMP_Dropdown;
+using VRTK;
 
 public class FileLoad2DMenu : MonoBehaviour {
 
@@ -14,13 +15,17 @@ public class FileLoad2DMenu : MonoBehaviour {
 
     CanvasGroup menuCanvas;
 
+ //   void Start () {
+
+	//}
+
     void OnEnable() {
         menuCanvas = GetComponent<CanvasGroup>();
         if (menuCanvas == null)
             menuCanvas = gameObject.AddComponent<CanvasGroup>();
         fileObjectPrefab.SetActive(false);
 
-        Refresh();
+        Refresh("");
         foreach (Transform fileObject in filesContainer.transform) {
             fileObject.gameObject.SetActive(false);
         }
@@ -46,40 +51,50 @@ public class FileLoad2DMenu : MonoBehaviour {
 
         foreach (Transform fileObject in filesContainer.transform) {
             if (fileObject != fileObjectPrefab.transform) {
-                fileObject.gameObject.SetActive(true);
-                fileObject.GetComponent<FileLoad2DObject>().FadeIn();
+                
+                //LeanTween.delayedCall(delay, () => {
+                    fileObject.gameObject.SetActive(true);
+                    fileObject.GetComponent<FileLoad2DObject>().FadeIn();
+                //});
                 delay += 0.1f;
             }
         }
     }
 
-    public void Refresh() {
-        float pos_y = 0.012f;
-        float pos_y_delta = 0.137f;
-        
+    public void Refresh(string filter) {
+        int position = 0;
+        int numSlots = 10;
         foreach (Transform child in filesContainer.transform) {
             if (child != fileObjectPrefab.transform)
-                child.gameObject.SetActive(false); //Destroy(child.gameObject);
+                Destroy(child.gameObject);
         }
         if (DataLoader.instance?.dataFiles == null)
             return;
 
-        List<GameObject> fileObjects = new List<GameObject>();
-        int numSlots = DataLoader.instance.dataFiles.Count;
-        int endCount = ((page + 1) * numSlots  < DataLoader.instance.dataFiles.Count) ? (page + 1) * numSlots : DataLoader.instance.dataFiles.Count;
-        for (int fileCount = page * numSlots; fileCount < endCount; fileCount++) {
-            GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
-            FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>();
-            file.file = DataLoader.instance.dataFiles[fileCount];
-            file.RefreshMetadata();
-            newFileObj.name = DataLoader.instance.dataFiles[fileCount].runtimeName;
-            newFileObj.transform.localPosition = new Vector3(0.3f, pos_y, 0);
-            newFileObj.SetActive(false);
-            pos_y -= pos_y_delta;
-            fileObjects.Add(newFileObj);
+        int filteredFiles = 0;
+        Debug.Log(filter);
+        foreach (SerialFile dataFile in DataLoader.instance.dataFiles) {
+            Debug.Log(dataFile.fileName);
+            if (dataFile.fileName.Contains(filter)) {
+                Debug.Log("Filterd" + dataFile.fileName);
+                filteredFiles++;
+            }
         }
-
-        filesContainer.GetComponent<PageObjectCollection>().SetUp(fileObjects);
+        //int endCount = ((page + 1) * numSlots < filteredFiles) ? (page + 1) * numSlots : filteredFiles;
+        int endCount = DataLoader.instance.dataFiles.Count;
+        for (int fileCount = page * numSlots; fileCount < endCount; fileCount++) {
+            Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
+            if (DataLoader.instance.dataFiles[fileCount].fileName.Contains(filter)) {
+                Debug.Log("Filtered" + DataLoader.instance.dataFiles[fileCount].fileName);
+                GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
+                FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>();
+                file.file = DataLoader.instance.dataFiles[fileCount];
+                file.RefreshMetadata();
+                newFileObj.name = DataLoader.instance.dataFiles[fileCount].runtimeName;
+                newFileObj.SetActive(true);
+                position++;
+            }
+        }
     }
 
     public void OnSortChange(int dropdownVal) {
@@ -95,20 +110,29 @@ public class FileLoad2DMenu : MonoBehaviour {
             case "File Name":
                 SortFilesByFileName();
                 break;
+            case "SDAP":
+                SortFilesBySDAP();
+                break;
         }
     }
     public void SortFilesByIdentifier() {
         DataLoader.instance.dataFiles = DataLoader.instance.dataFiles.OrderBy(o => o.identifier).ToList();
-        Refresh();
+        Refresh("");
     }
 
     public void SortFilesByFileName() {
         DataLoader.instance.dataFiles = DataLoader.instance.dataFiles.OrderBy(o => o.fileName).ToList();
-        Refresh();
+        Refresh("");
     }
     
     public void SortFilesByLastModified() {
         DataLoader.instance.dataFiles = DataLoader.instance.dataFiles.OrderByDescending(o => o.lastModified).ToList();
-        Refresh();
+        Refresh("");
+    }
+
+    public void SortFilesBySDAP()
+    {
+        DataLoader.instance.dataFiles = DataLoader.instance.dataFiles.OrderBy(o => o.identifier).ToList();
+        Refresh("sdap");
     }
 }

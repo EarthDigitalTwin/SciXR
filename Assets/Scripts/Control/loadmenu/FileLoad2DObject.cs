@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using VRTK;
 using Text = TMPro.TMP_Text;
 
 public class FileLoad2DObject : MonoBehaviour {
@@ -22,7 +23,7 @@ public class FileLoad2DObject : MonoBehaviour {
     FileLoad2DMenu menu;
 
     private void Start() {
-        menu = GameObject.Find("FileSelection_3D").GetComponent<FileLoad2DMenu>();
+        menu = GetComponentInParent<FileLoad2DMenu>();
     }
 
     public void FadeIn() {
@@ -42,7 +43,7 @@ public class FileLoad2DObject : MonoBehaviour {
     }
 
     public void RefreshMetadata() {
-        menu = GameObject.Find("FileSelection_3D").GetComponent<FileLoad2DMenu>();
+        menu = GetComponentInParent<FileLoad2DMenu>();
         if(menu.sortBy == "Identifier") {
             fileName.text = file.identifier;
         }
@@ -50,14 +51,51 @@ public class FileLoad2DObject : MonoBehaviour {
             fileName.text = file.fileName;
         }
         secondRowInfo.text = file.lastModified.ToString();
+        //string hasResults = (file.hasResults) ? "Yes" : "No";
+        //string hasOverlay = (file.hasOverlay) ? "Yes" : "No";
+        //string type = "Unknown";
+        //switch(file.type) {
+        //    case SerialData.DataType.flat:
+        //        type = "2D Gridded";
+        //        break;
+        //    case SerialData.DataType.globe:
+        //        type = "Global";
+        //        break;
+        //    case SerialData.DataType.pointcloud:
+        //        type = "Point Cloud";
+        //        break;
+        //}
+        //string metadataLabelsString = "File: " + "\n"
+        //    + "Modified:" + "\n"
+        //    + "Type:" + "\n"
+        //    + "Has Results:" + "\n"
+        //    + "Has Overlay:" + "\n"
+        //    + "Runtime:" + "\n"
+        //    + "Triangles:" + "\n"
+        //    + "Vertices:";
+        //string metadataValuesString = file.fileName + "\n"
+        //   + file.lastModified + "\n"
+        //   + type + "\n"
+        //   + hasResults + "\n"
+        //   + hasOverlay + "\n"
+        //   + file.runtimeName + "\n"
+        //   + file.triangleCount + "\n"
+        //   + file.vertexCount;
+        
+        //metadataLabels.text = metadataLabelsString;
+        //metadataValues.text = metadataValuesString;
+        
     }
     
+    // VR pointer handling
+
     public void LoadData(bool autoPosition = true) {
+        //metadata.gameObject.SetActive(false);
         Vector3 position = Vector3.zero;
         Vector3 eulerAngles = Vector3.zero;
 
         if (autoPosition) {
-            float distance = 2;
+            float distance = 1;
             Transform cameraTransform = DesktopInterface.instance.transform;
             Vector3 headsetForward = new Vector3(cameraTransform.forward.x, 0, cameraTransform.forward.z);
             headsetForward.Normalize();
@@ -69,13 +107,14 @@ public class FileLoad2DObject : MonoBehaviour {
             eulerAngles = Quaternion.LookRotation(directionVector).eulerAngles;
         }
         else {
-            position = transform.position + transform.forward * 0.6f;
+            position = transform.position + transform.forward * 0.4f;
             eulerAngles = Quaternion.LookRotation(position - transform.position).eulerAngles;
             eulerAngles.x = 0;
             eulerAngles.z = 0;
         }
         menu.BeginDisable();
         DataLoader.instance.CreateDataObject(file, position, eulerAngles);
+        
     }
 
     public void HandlePointerEnter(BaseEventData data) {

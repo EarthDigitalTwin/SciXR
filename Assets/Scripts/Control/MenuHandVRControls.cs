@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using VRTK;
 
 public class MenuHandVRControls : MonoBehaviour {
-    /*
     public GameObject loadMenu;
     public CanvasGroup screenshotMenu;
     public GameObject slicer;
@@ -124,5 +124,4 @@ public class MenuHandVRControls : MonoBehaviour {
         Vector3 finalPosition = headset.position + headsetForward * 0.6f;
         return new Vector3(finalPosition.x, height, finalPosition.z);
     }
-    */
 }

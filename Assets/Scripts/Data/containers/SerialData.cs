@@ -14,8 +14,7 @@ public class SerialData {
     public enum DataType {
         flat,
         globe,
-        pointcloud,
-        timeseries
+        pointcloud
     };
 
     // Data fields

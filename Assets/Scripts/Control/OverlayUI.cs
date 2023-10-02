@@ -73,7 +73,7 @@ public class OverlayUI : MonoBehaviour {
     private Vector3 lastOffset = Vector3.zero;
     private Vector3 lastScale = Vector3.one;
 
-    public void Start() {
+    private void Start() {
         data = GetComponentInParent<DataObject>();
         if(data.isFinishedInit) {
             SetupContainers();

@@ -19,6 +19,7 @@
 *.pidb
 *.booproj
 *.svd
+*.meta
 
 # Lightmaps
 LightmapSnapshot.asset

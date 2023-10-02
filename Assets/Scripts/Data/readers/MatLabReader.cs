@@ -33,7 +33,7 @@ public class MatLabReader {
 
     public static SerialData ReadModelFromPath(string path, SerialFile dataFile, DataObject dataObject, float loadWeight) {
         SerialData data = new SerialData();
-        string[] plyOutput = File.ReadAllLines(path);//ClientObject.GetFile(path);
+        string[] plyOutput = File.ReadAllLines(path);
         if (dataFile == null)
             dataFile = MetadataFromPath(path);
 

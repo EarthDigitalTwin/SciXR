@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using VRTK;
 
 public class PointerHandVRControls : MonoBehaviour {
-    /*
+
     public float hapticWaitTime = 0.1f;
     private float timeSinceLastHapticPulse = 0;
     private VRTK_UIPointer UIPointer;
@@ -71,5 +72,4 @@ public class PointerHandVRControls : MonoBehaviour {
     void TopButtonPressed(object sender, ControllerInteractionEventArgs e) {
             ScreenshotControls.instance.TakeScreenshot();
     }
-    */
 }

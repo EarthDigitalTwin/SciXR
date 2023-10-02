@@ -1,5 +1,4 @@
-﻿using Microsoft.MixedReality.Toolkit.UI;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,7 +6,9 @@ using Text = TMPro.TMP_Text;
 
 
 public class AnimationControls : MonoBehaviour {
-    public PinchSlider slider;
+    public Slider slider;
+    public Toggle playPauseToggle;
+    public Toggle loopToggle;
     public Text animationText;
 
     //public ToggleGroup speedToggleGroup;
@@ -16,31 +17,27 @@ public class AnimationControls : MonoBehaviour {
     private LTDescr tween;
     public DataObject data;
 
-    private bool playToggleOn = false;
-    private bool loopToggleOn = false;
-
     void Start() {
         data = GetComponentInParent<DataObject>();
     }
 
     public bool IsAnimating() {
-        return playToggleOn;
+        return !playPauseToggle.isOn;
     }
 
     public void OnPlayToggle(bool status) {
         // status is set up backwards on the toggle so lets flip
         status = !status;
-        playToggleOn = status;
 
         if(status) {
             // Start animating
 
             // First loop to end
-            int numLoops = loopToggleOn ? -1 : 0;
-            tween = LeanTween.value(gameObject, 0, 1, secondsToAnimate).setOnUpdate((float val) => { slider.SliderValue = val; }).setRepeat(numLoops);
-            tween.setOnComplete(() => { playToggleOn = false; }).setOnCompleteOnRepeat(false);
-            if (slider.SliderValue < 1)
-                tween.setPassed(secondsToAnimate * slider.SliderValue);
+            int numLoops = loopToggle.isOn ? -1 : 0;
+            tween = LeanTween.value(gameObject, 0, slider.maxValue, secondsToAnimate).setOnUpdate((float val) => { slider.value = val; }).setRepeat(numLoops);
+            tween.setOnComplete(() => { playPauseToggle.isOn = true; }).setOnCompleteOnRepeat(false);
+            if (slider.normalizedValue < 1)
+                tween.setPassed(secondsToAnimate * slider.normalizedValue);
 ;        }
         else {
             // Stop animating
@@ -52,8 +49,6 @@ public class AnimationControls : MonoBehaviour {
     }
 
     public void OnLoopToggle(bool status) {
-        loopToggleOn = status;
-
         if (status && tween != null) {
             tween.setLoopClamp();
             tween.pause();
@@ -66,12 +61,9 @@ public class AnimationControls : MonoBehaviour {
         }
     }
 
-    public void UpdateAnimationInfo(SliderEventData info) {
+    public void UpdateAnimationInfo(float frame) {
         if( data != null && data.data.results != null && data.data.results.Count > 0) {
-            float frame = info.NewValue * data.data.results.Count;
             int frameInt = (int)frame;
-            if (frameInt == data.data.results.Count)
-                frameInt--;
 
             float time = data.data.results[frameInt].time;
             int step = data.data.results[frameInt].step;
@@ -88,8 +80,6 @@ public class AnimationControls : MonoBehaviour {
                 animationText.text += "\n" +
                     "<b>IceVolume: </b> " + iceVolume;
             }
-
-            data.SetFrame(frame);
         }
         else {
             animationText.text = "No Animation Available";

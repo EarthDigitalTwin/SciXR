@@ -8,8 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
-using Mirror;
-using Microsoft.MixedReality.Toolkit.UI;
 
 public class DataObject : MonoBehaviour {
     public enum ColorMode {
@@ -35,12 +33,6 @@ public class DataObject : MonoBehaviour {
     public GameObject dataOverlay;
     public GameObject dataMeshParent;
     public GameObject overlayUI;
-    public GameObject overlayButton;
-    public GameObject timeButton;
-    public GameObject timeController;
-    public GameObject colorbarDropdown;
-    public GameObject dropdownOptionPrefab;
-    public Transform colorbarOptionContainer;
 
     // Data
     [HideInInspector] public SerialData data;
@@ -161,39 +153,7 @@ public class DataObject : MonoBehaviour {
     }
     public void InitComplete() {
         isFinishedInit = true;
-        //SetUpColorbars();
         OnInitComplete.Invoke();
-    }
-
-    public void SetUpColorbars()
-    {
-        float yCurr = 20;
-        float yDelta = 20;
-
-        List<Colorbar> options = DataLoader.instance.presetColorbars;
-        ARDropdown arDropdown = colorbarDropdown.GetComponent<ARDropdown>();
-
-        for (int i = 0; i < options.Count; i++)
-        {
-            Colorbar c = options[i];
-
-            GameObject option = Instantiate(dropdownOptionPrefab, colorbarOptionContainer);
-            option.name = c.name;
-            option.transform.GetChild(2).GetChild(0).gameObject.GetComponent<TMPro.TextMeshProUGUI>().text = c.name;
-            option.transform.localPosition = new Vector3(0, yCurr, 0);
-            yCurr -= yDelta;
-
-            Button optionButton = option.GetComponent<Button>();
-            PressableButtonHoloLens2 optionButtonAR = option.GetComponent<PressableButtonHoloLens2>();
-            //optionButton.onClick.AddListener(() => SetColorbar(i));
-            //optionButtonAR.ButtonReleased.AddListener(() => SetColorbar(i));
-
-            arDropdown.options.Add(option);
-            arDropdown.checks.Add(option.transform.GetChild(2).GetChild(1).gameObject);
-            option.SetActive(true);
-        }
-
-        arDropdown.Start();
     }
 
     // Methods
@@ -201,9 +161,6 @@ public class DataObject : MonoBehaviour {
     public SerialMesh GenerateMeshData(SerialData serialData) {
         Stopwatch watch = new Stopwatch();
         watch.Start();
-
-        // Make sure the current data matches
-        data = serialData;
 
         SerialMesh newSerialMesh = new SerialMesh();
         RecalculateBounds();
@@ -267,7 +224,7 @@ public class DataObject : MonoBehaviour {
         scale = new Vector3(XYScale, XYScale, zScale);
 
         // Construct vertices and texture uv's
-        for (int index = 0; index < serialData.vertexCount; index++) {
+        for (int index = 0; index < vertexCount; index++) {
             //if (index % 1000 == 0 || index == vertexCount - 1) {
             //    ThreadManager.instance.callbacks.Add(() => {
             //        UpdateLoadPercent(0.8f + (float)index / vertexCount * 0.2f, "Generating Mesh");
@@ -283,6 +240,7 @@ public class DataObject : MonoBehaviour {
             Vector2 newUV2 = new Vector2(Mathf.InverseLerp(YMin, YMax, y[index]), Mathf.InverseLerp(XMin, XMax, x[index]));
             uv2.Add(newUV2);
         }
+
 
         if (triColorMode) {
             List<Vector3> triModeVertices = new List<Vector3>();
@@ -362,9 +320,10 @@ public class DataObject : MonoBehaviour {
         Mesh mesh = SerialMesh.MeshDataToMesh(serialMesh, data.type != SerialData.DataType.globe && data.type != SerialData.DataType.pointcloud);
 
         if (data.type == SerialData.DataType.pointcloud) {
+            GetComponentInChildren<ColliderDisableInteractable>().enabled = false;
             subMesh.GetComponent<MeshCollider>().enabled = false;
             mesh.SetIndices(Enumerable.Range(0, vertexCount).ToArray(), MeshTopology.Points, 0);
-           	materialOverlay.SetTexture("_MainTex", new Texture2D(0, 0));
+            materialOverlay.SetTexture("_MainTex", new Texture2D(0, 0));
             float xTransform = 0.5f;
             float yTransform = 0.2f;
             if ((mesh.bounds.extents.x / mesh.bounds.extents.y) < 2) {
@@ -377,8 +336,6 @@ public class DataObject : MonoBehaviour {
             Mesh quadMesh = gameObject.GetComponent<MeshFilter>().mesh;
             dataOverlay.GetComponent<MeshFilter>().sharedMesh = quadMesh;
             GameObject.Destroy(gameObject);
-
-            overlayButton.SetActive(true);
         }
 
         CurrentMesh = mesh;
@@ -411,7 +368,6 @@ public class DataObject : MonoBehaviour {
 
         if (serialMesh.overlayVertices != null && serialMesh.overlayVertices.Length > 0) {
             dataOverlay.GetComponent<MeshFilter>().sharedMesh = SerialMesh.MeshOverlayToMesh(serialMesh);
-            overlayButton.SetActive(true);
         }
 
         if(data.type != SerialData.DataType.globe) {
@@ -420,7 +376,8 @@ public class DataObject : MonoBehaviour {
     }
 
     public void ProcessResults(SerialMesh mesh) {
-        // Process dataContainer.results and add animations to appropriate submeshes        
+        // Process dataContainer.results and add animations to appropriate submeshes
+        
             mesh.blendShapes = new List<Vector3[]>();
             for (int resultCount = 0; resultCount < data.results.Count; resultCount++) {
 
@@ -429,7 +386,7 @@ public class DataObject : MonoBehaviour {
                     List<Vector3> newVertices = new List<Vector3>();
                     float newZ, newColor;
                     Vector3 oldPoint, newPoint;
-                    for (int index = 0; index < mesh.vertices.Length; index++) {
+                    for (int index = 0; index < data.vertexCount; index++) {
                         newZ = (hasExtrudeResults) ? data.results[resultCount].vars[currentExtrude][index] : data.vars[currentExtrude][index];
                         newColor = (hasColorResults) ? data.results[resultCount].vars[currentColor][index] : data.vars[currentColor][index];
                         oldPoint = new Vector3(data.vars[data.xIndexDefault][index], data.vars[data.yIndexDefault][index], newZ);
@@ -559,12 +516,6 @@ public class DataObject : MonoBehaviour {
             GetComponentInChildren<OverlayUI>().SetupContainers();
         // RefreshUI
         GetComponentInChildren<MeshVRControls>().RefreshUI();
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SwapZ", label);
-        }
     }
 
     public void SwapColor(string label) {
@@ -614,12 +565,6 @@ public class DataObject : MonoBehaviour {
         
         // RefreshUI
         GetComponentInChildren<MeshVRControls>().RefreshUI();
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SwapColor", label);
-        }
     }
 
     public void ManualSwapUV(Vector2[] newUV) {
@@ -627,23 +572,12 @@ public class DataObject : MonoBehaviour {
         Mesh mesh = CurrentMesh;
         mesh.uv = newUV;
         CurrentMesh = mesh;
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "ManualSwapUV", JsonUtility.ToJson(newUV));
-        }
     }
 
     public void SetFrame(float frame) {
         DataSubMesh subMesh = subMeshOriginal.GetComponent<DataSubMesh>();
         subMesh.SetFrame(frame);
         currentFrame = (int)frame;
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetFrame", frame.ToString());
-        }
     }
     public void SetInterpMethod(int newMethod) {
         InterpMethod newMethodType = InterpMethod.linear;
@@ -658,115 +592,46 @@ public class DataObject : MonoBehaviour {
         materialUI.SetFloat("_EnableLog", (newMethodType == InterpMethod.log) ? 1 : 0);
         material.SetFloat("_EnableLog", (newMethodType == InterpMethod.log) ? 1 : 0);
         method = newMethodType;
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetInterpMethod", newMethod.ToString());
-        }
     }
-    public void SetColorMode(ColorMode newMode)
-    {
+    public void SetColorMode(bool status) {
+        ColorMode newMode = (status) ? ColorMode.normal : ColorMode.focus;
+        SetColorMode(newMode);
+    }
+    public void SetColorMode(ColorMode newMode) {
         //ColorMode newMode = (ColorMode)System.Enum.Parse(typeof(ColorMode), newModeString);
-        if (newMode == ColorMode.normal)
-        {
+        if(newMode == ColorMode.normal) {
             materialUI.SetFloat("_ColorMode", 1);
             material.SetFloat("_ColorMode", 1);
         }
-        if (newMode == ColorMode.focus)
-        {
+        if(newMode == ColorMode.focus) {
             materialUI.SetFloat("_ColorMode", 0);
             material.SetFloat("_ColorMode", 0);
         }
         colorMode = newMode;
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetColorMode", ((int)newMode).ToString());
-        }
-    }
-    public void SetColorModeBool(bool status) {
-        ColorMode newMode = (status) ? ColorMode.normal : ColorMode.focus;
-        SetColorMode(newMode);
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetColorModeBool", status.ToString());
-        }
     }
     public void SetColorMin(float normalizedVal) {
         material.SetFloat("_Min", normalizedVal);
         materialUI.SetFloat("_Min", normalizedVal);
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetColorMin", normalizedVal.ToString());
-        }
     }
     public void SetColorMax(float normalizedVal) {
         material.SetFloat("_Max", normalizedVal);
         materialUI.SetFloat("_Max", normalizedVal);
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetColorMax", normalizedVal.ToString());
-        }
     }
     public void SetInvert(bool status) {
         material.SetFloat("_Invert", (status) ? 1 : 0);
         materialUI.SetFloat("_Invert", (status) ? 1 : 0);
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetInvert", status.ToString());
-        }
     }
     public void SetDataClip(bool status) {
         material.SetFloat("_MinMaxClip", (status) ? 1 : 0);
         materialUI.SetFloat("_MinMaxClip", (status) ? 1 : 0);
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetDataClip", status.ToString());
-        }
     }
-    public void SetColorbar(int colorbarIndex)
-    {
+    public void SetColorbar(int colorbarIndex) {
         Colorbar newColorbar = DataLoader.instance.presetColorbars[colorbarIndex];
-        Debug.Log("Changing colorbar to " + newColorbar.name);
-        if (newColorbar != null)
-        {
+        if (newColorbar != null) {
             currentColorbar = newColorbar;
             material.SetTexture("_MainTex", newColorbar.texture);
             materialUI.SetTexture("_MainTex", newColorbar.texture);
             GetComponentInChildren<MeshVRControls>().RefreshUI();
-        }
-
-        colorbarDropdown.GetComponent<ARDropdown>().ChangeSelected(colorbarIndex);
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetColorbar", colorbarIndex.ToString());
-        }
-    }
-    public void SetOverlayZ(float z)
-    {
-        Transform overlay = dataOverlay.transform;
-        Vector3 pos = overlay.localPosition;
-        pos.y = z;
-        overlay.localPosition = pos;
-
-        if (NetworkManager.singleton.isNetworkActive)
-        {
-            NetworkDataManager dm = GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>();
-            dm.UpdateData(this.gameObject.name, "SetOverlayZ", z.ToString());
         }
     }
 

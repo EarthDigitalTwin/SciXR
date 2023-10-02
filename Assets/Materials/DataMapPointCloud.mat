@@ -4,9 +4,8 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
   m_Name: DataMapPointCloud
   m_Shader: {fileID: 4800000, guid: dd64202b32e0de24ca17c52300d08fb0, type: 3}
   m_ShaderKeywords: COLOR_MODE S_RECEIVE_SHADOWS S_SPECULAR_BLINNPHONG
@@ -95,7 +94,6 @@ Material:
     - _EdgeDistance: 0.001
     - _EnableClip: 0
     - _EnableLog: 0
-    - _ExtraClipMode: 0
     - _Fade: 0.492
     - _Focus: 0
     - _FogMultiplier: 1
@@ -107,7 +105,6 @@ Material:
     - _Max: 1
     - _Metallic: 0.6
     - _Min: 0
-    - _MinMaxClip: 0
     - _Mode: 2
     - _NoiseScale: 0.009
     - _OcclusionStrength: 1
@@ -117,7 +114,6 @@ Material:
     - _OcclusionStrengthIndirectSpecular: 1
     - _Parallax: 0.02
     - _Phong: 0.5
-    - _PointSize: 0
     - _RimFalloff: 0.585
     - _RimPower: 3
     - _RimStrenght: 0.09
@@ -126,7 +122,7 @@ Material:
     - _ScanStr2: 0
     - _SeeThru: 0.25
     - _Shininess: 1
-    - _Size: 0.05
+    - _Size: 0.0013
     - _SpecularMode: 1
     - _SrcBlend: 1
     - _Tess: 1

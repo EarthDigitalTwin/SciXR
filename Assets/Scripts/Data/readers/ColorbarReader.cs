@@ -15,7 +15,7 @@ public class ColorbarReader {
 	{
 		Stopwatch watch = new Stopwatch();
 		watch.Start();
-        string[] jsOutput = File.ReadAllLines(path); //ClientObject.GetFile(path);
+		string[] jsOutput = File.ReadAllLines(path);
 
 		// Get colorbar
 		string colorbarName = null;

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR;
 //using UnityEditor;
+using VRTK;
 
 public class SceneController : MonoBehaviour {
     public bool manualSceneLoad = false;
@@ -15,14 +16,11 @@ public class SceneController : MonoBehaviour {
 
     void Awake() {
         FindObjectOfType<DataObject>()?.gameObject.SetActive(false);
+        XRSettings.enabled = false;
+        XRSettings.enabled = true;
         if (disableVR) {
             XRSettings.enabled = false;
             XRSettings.LoadDeviceByName("None");
-        }
-        else
-        {
-            XRSettings.enabled = false;
-            XRSettings.enabled = true;
         }
     }
 

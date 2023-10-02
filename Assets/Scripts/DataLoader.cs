@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
+using VRTK;
 //Aliases for TMPro
 using Text = TMPro.TMP_Text;
-using Mirror;
 //using Reader = ModelJSReader;
 
 public class DataLoader : MonoBehaviour {
@@ -23,8 +23,8 @@ public class DataLoader : MonoBehaviour {
     public static DataLoader instance;
 
     // Properties
-    public string dataPath = "";
-    public string colorbarPath = "/colorbars.js";
+    public string dataPath = "Data";
+    public string colorbarPath = "Data/Colorbars/colorbars.js";
     public string dataPreviewSubPath = "DataPreviews";
     public string dataPreviewPath { get { return Path.Combine(Application.streamingAssetsPath, dataPreviewSubPath); } }
     public GameObject screenFileLoadContainer;
@@ -38,17 +38,19 @@ public class DataLoader : MonoBehaviour {
 	public Material smallPointCloudMaterial;
     public Material defaultMaterialUI;
     public List<Texture2D> overlayTextures;
+    public List<VRTK_Pointer> vrPointers = new List<VRTK_Pointer>();
 
     public DataLoadEvent OnDataLoad;
 
     [HideInInspector] public List<SerialFile> dataFiles;
     [HideInInspector] public List<Colorbar> presetColorbars;
     [HideInInspector] public List<GameObject> loadedData = new List<GameObject>();
+    public List<String> SDAPLinks;
 
     // Use this for initialization
-    public void SetUp() {
+    void Start() {
 
-        /* FileSystemWatcher watcher = new FileSystemWatcher();
+        FileSystemWatcher watcher = new FileSystemWatcher();
         watcher.Path = dataPath;
         watcher.Filter = "*.js";
         watcher.NotifyFilter = NotifyFilters.LastAccess |
@@ -62,98 +64,56 @@ public class DataLoader : MonoBehaviour {
         watcher.IncludeSubdirectories = true;
         watcher.Changed += OnDirectoryChange;
         watcher.Created += OnDirectoryChange;
-        watcher.EnableRaisingEvents = true; */
+        watcher.EnableRaisingEvents = true;
 
         instance = this;
-
         LoadColormaps();
         LoadFiles();
     }
 
-    private string GetDataPath()
-    {
-        
-        // Path for HoloLens
-#if WINDOWS_UWP
-        Windows.Storage.StorageFolder folder = Windows.Storage.KnownFolders.Objects3D;
-        string pathStart = folder.Path;
-        return pathStart;
-#endif
-        
-        // Path for Unity Editor
-        return "Data";
-    }
-
-    /*
     private void OnDirectoryChange(object sender, FileSystemEventArgs e) {
         Debug.Log("Data Directory change detected!");
         ThreadManager.instance.callbacks.Add(() => LoadFiles());
     }
-    */
 
     // Callbacks
     void LoadColormaps() {
         ColorbarReader colorbarReader = new ColorbarReader();
-        presetColorbars = colorbarReader.ReadColorbarsFromPath(GetDataPath() + "/" + colorbarPath);
+        presetColorbars = colorbarReader.ReadColorbarsFromPath(colorbarPath);
     }
 
     void LoadFiles() {
+        //DataSet ds = DataSet.Open("filepath.nc?openMode=create");
+
         dataFiles = new List<SerialFile>();
-        string[] files = Directory.GetFiles(GetDataPath() + dataPath);
-        string[] directories = Directory.GetDirectories(GetDataPath() + dataPath); //ClientObject.GetFileNames();
-        List<string> allToLoad = new List<string>();
-        allToLoad.AddRange(directories);
-        allToLoad.AddRange(files);
+        string[] files = Directory.GetFiles(dataPath);
 
-        foreach (string fileFull in allToLoad) {
-            Debug.LogWarning(fileFull);
-            int bs_idx = fileFull.LastIndexOf("\\");
-            int fs_idx = fileFull.LastIndexOf("/");
-            string filename;
-            if (bs_idx > 0 || fs_idx > 0)
-                filename = fileFull.Substring(Math.Max(bs_idx, fs_idx) + 1);
-            else
-                filename = fileFull;
-
-            if (fileFull.Contains(".js") && !fileFull.Contains("colorbar")) {
+        foreach (string fileFull in files) {
+            if (fileFull.Contains(".js")) {
                 SerialFile newDataFile = ModelJSReader.MetadataFromPath(fileFull);
-                newDataFile.path = fileFull;
-                newDataFile.fileName = filename;
-                newDataFile.identifier = newDataFile.fileName;
                 dataFiles.Add(newDataFile);
             }
-            else if (fileFull.Contains(".ply") && !fileFull.Contains("colorbar")) {
+            else if (fileFull.Contains(".ply")) {
                 SerialFile newDataFile = PLYReader.MetadataFromPath(fileFull);
-                newDataFile.path = fileFull;
-                newDataFile.fileName = filename;
-                newDataFile.identifier = newDataFile.fileName;
                 dataFiles.Add(newDataFile);
             } 
-            else if (fileFull.Contains(".mat") && !fileFull.Contains("colorbar")) {
+            else if (fileFull.Contains(".mat")) {
                 SerialFile newDataFile = MatLabReader.MetadataFromPath(fileFull);
-                newDataFile.path = fileFull;
-                newDataFile.fileName = filename;
-                newDataFile.identifier = newDataFile.fileName;
                 dataFiles.Add(newDataFile);
             }
-            else if (fileFull.Contains("_tseries") && !fileFull.Contains("colorbar"))
+            else if (fileFull.Contains(".sdap"))
             {
-                SerialFile newDataFile = new SerialFile();
-                newDataFile.type = SerialData.DataType.timeseries;
-                newDataFile.path = fileFull;
-                newDataFile.fileName = filename;
-                newDataFile.identifier = fileFull.Substring(0, fileFull.IndexOf("_tseries"));
+                SerialFile newDataFile = PLYReader.MetadataFromPath(fileFull);
                 dataFiles.Add(newDataFile);
             }
         }
-
         if (screenFileLoadContainer.activeSelf) {
             //screenFileLoadContainer.GetComponent<FileLoadMenu>()?.Refresh();
-            //screenFileLoadContainer.GetComponent<FileLoad2DMenu>()?.Refresh();
+            screenFileLoadContainer.GetComponent<FileLoad2DMenu>()?.Refresh("");
         }
         else if (vrFileLoadContainer.activeSelf) {
             //vrFileLoadContainer.GetComponent<FileLoadMenu>()?.Refresh();
-            vrFileLoadContainer.GetComponent<FileLoad2DMenu>()?.Refresh();
+            vrFileLoadContainer.GetComponent<FileLoad2DMenu>()?.Refresh("");
         }
         else {
             //screenFileLoadContainer.SetActive(true);
@@ -161,32 +121,27 @@ public class DataLoader : MonoBehaviour {
         }
     }
 
+    void LoadSDAP() {
+        SDAPLinks = new List<String>();
+        // hardcode links for demo
+        SDAPLinks.Add("GLDAS_VIC10_3H_2_1_global_Qs_acc");
+        SDAPLinks.Add("GLDAS_VIC10_3H_2_1_global_Qsb_acc");
+        SDAPLinks.Add("GPM-3IMERGHHR-06-daily-global-precipitationCal_transposed");
+        SDAPLinks.Add("LIS-ESoil-tavg");
+        SDAPLinks.Add("LIS_gar_1x_Qs_tavg");
+        SDAPLinks.Add("LIS_gar_1x_Qsb_tavg");
+        SDAPLinks.Add("LIS_miss_1x_Qs_tavg");
+        SDAPLinks.Add("LIS_miss_1x_Qsb_tavg");
+    }
+
     public void CreateDataObject(SerialFile dataFile, Vector3 position, Vector3 eulerAngles) {
         //Instantiate data object with metadata from file load, then fire multithreaded load
         GameObject newDataObj = Instantiate(dataPrefab);
         newDataObj.SetActive(true);
 
-        // Spawn the data on the network if applicable
-        if (NetworkManager.singleton.isNetworkActive)
-            GameObject.Find("DataManager(Clone)").GetComponent<NetworkDataManager>().SyncData(dataFile, position, eulerAngles);
-
         DataObject dataObject = newDataObj.GetComponent<DataObject>();
         dataObject.transform.position = position;
         dataObject.transform.eulerAngles = eulerAngles;
-
-        dataObject.fileName = dataFile.fileName;
-        dataObject.filePath = dataFile.path;
-        dataObject.identifier = dataFile.identifier;
-        dataObject.gameObject.name = dataObject.identifier + "_instance";
-        dataObject.lastModified = dataFile.lastModified;
-
-        if (dataFile.type == SerialData.DataType.timeseries)
-        {
-            // Handle the rest of the object creation in the TimeSeriesController
-            dataObject.timeController.SetActive(true);
-            return;
-        }
-
         //dataObject.transform.localEulerAngles = new Vector3(dataObject.transform.localEulerAngles.x, 0, dataObject.transform.localEulerAngles.z);
         if (dataFile.type == SerialData.DataType.pointcloud) {
 			if (dataFile.vertexCount < 500000 && SystemInfo.graphicsShaderLevel >= 50) {
@@ -203,32 +158,40 @@ public class DataLoader : MonoBehaviour {
         dataObject.materialOverlay = Material.Instantiate(defaultMaterial);
 
         dataObject.currentColorbar = presetColorbars[0];
-        dataObject.type = dataFile.type;
-
+        dataObject.identifier = dataFile.identifier;
         dataObject.vertexCount = dataFile.vertexCount;
         dataObject.triangleCount = dataFile.triangleCount;
         dataObject.notes = dataFile.notes;
 
+        dataObject.fileName = dataFile.fileName;
+        dataObject.filePath = dataFile.path;
+        dataObject.lastModified = dataFile.lastModified;
         dataObject.runtimeName = dataFile.runtimeName;
+        dataObject.type = dataFile.type;
+
+        dataObject.gameObject.name = dataObject.identifier + "_instance";
 
         loadedData.Add(dataObject.gameObject);
 
-        if (DesktopInterface.instance != null)
-        {
-            DesktopInterface.instance.RefreshLoadedMeshesMenu();
-            DesktopInterface.instance.SetTarget(dataObject.GetComponentInChildren<MeshVRControls>().transform);
-        }
+        //MenuHandVRControls vrControls = FindObjectOfType<MenuHandVRControls>();
+        //if (vrControls!= null && VRTK.VRTK_SDKManager.instance.loadedSetup != null) {
+        //    vrControls.LoadMenuCloseClick();
+        //    vrControls.CloseClick();
+        //}
+        DesktopInterface.instance.RefreshLoadedMeshesMenu();
+        DesktopInterface.instance.SetTarget(dataObject.GetComponentInChildren<MeshVRControls>().transform);
 
         // Fire off data reading task
         Task dataRead = Task.Run(() => { LoadDataAsync(dataFile, dataObject); });
-        
+
+        // Make it synchronouse instead!
+        //LoadDataAsync(dataFile, dataObject);
     }
 
     // Populate serialData and serialMesh from fileToLoad, then send back to main thread for processing
-    public void LoadDataAsync(SerialFile fileToLoad, DataObject dataObject) {
+    void LoadDataAsync(SerialFile fileToLoad, DataObject dataObject) {
         Stopwatch watch = new Stopwatch();
         Debug.Log(string.Format("Task={0}, Thread={1}", Task.CurrentId, Thread.CurrentThread.ManagedThreadId));
-        Debug.Log(fileToLoad.path);
         Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Lowest;
 
         // Populate serialData from data file and assign it (and a few other fields) to dataObject
@@ -240,8 +203,11 @@ public class DataLoader : MonoBehaviour {
         else if (fileToLoad.fileName.EndsWith(".ply")) {
             serialData = PLYReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
         }
+        else if (fileToLoad.fileName.EndsWith(".sdap"))
+        {
+            serialData = PLYReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
+        }
         dataObject.data = serialData;
-        dataObject.type = serialData.type;
         dataObject.currentExtrude = serialData.zIndexDefault;
         dataObject.currentColor = serialData.colorIndexDefault;
         watch.Stop();
@@ -300,8 +266,6 @@ public class DataLoader : MonoBehaviour {
 			}
 		}
 
-        dataObject.GetComponent<DataInstanceRatio>().SetAspectRatio(xVals.Max() - xVals.Min(), yVals.Max() - yVals.Min());
-
         OverlayLoader.BBox bbox = OverlayLoader.GetObjectBounds(xVals, yVals, dataObject.data.projection);
 
         foreach (Texture2D tex in overlayTextures) {
@@ -324,20 +288,19 @@ public class DataLoader : MonoBehaviour {
                 //localScale.x = dataObject.dataOverlay.transform.localScale.x * scale;
                 //localScale.y = dataObject.dataOverlay.transform.localScale.y * scale;
                 //dataObject.dataOverlay.transform.localScale = localScale;
-                if (dataObject.identifier.Contains("2015-08-16") == true)
-                {
+                if (dataObject.identifier.Contains("2015-08-16") == true) {
                     Texture2D texture;
                     Debug.Log("Loading texture 2015-08-16.png");
                     texture = (Texture2D)Resources.Load("2015-08-16.png");
                     dataObject.materialOverlay.SetTexture("_MainTex", texture);
-                }
-                else
-                {
+                } 
+                else {
                     StartCoroutine(OverlayLoader.LoadImageryFromBounds(dataObject.materialOverlay, "BlueMarble_ShadedRelief_Bathymetry", dataObject.data.projection, bbox, dataObject.data.time));
                 }
             }
-            else if (dataObject.data.projection == "4326")
-            {
+            else if (dataObject.data.projection == "4326") {
+                
+                //StartCoroutine(OverlayLoader.LoadImageryFromBounds(dataObject.materialOverlay, "HLS_L30_Nadir_BRDF_Adjusted_Reflectance", dataObject.data.projection, bbox, dataObject.data.time));
                 StartCoroutine(OverlayLoader.LoadImageryFromBounds(dataObject.materialOverlay, "VIIRS_SNPP_CorrectedReflectance_TrueColor", dataObject.data.projection, bbox, dataObject.data.time));
 			}
             if (dataObject.data.type == SerialData.DataType.pointcloud) {
@@ -378,23 +341,14 @@ public class DataLoader : MonoBehaviour {
     // Public callback methods
 
     public void RemoveMesh(GameObject dataMesh) {
-        
         loadedData.Remove(dataMesh);
         DesktopInterface controls = DesktopInterface.instance;
-        if (controls != null && controls.target == dataMesh) {
+        if (controls.target == dataMesh) {
             controls.target = null;
-            Destroy(dataMesh);
-            controls.RefreshLoadedMeshesMenu();
+
         }
-        else if (controls != null)
-        {
-            Destroy(dataMesh);
-            controls.RefreshLoadedMeshesMenu();
-        }
-        else
-        {
-            Destroy(dataMesh);
-        }
+        Destroy(dataMesh);
+        controls.RefreshLoadedMeshesMenu();
     }
     
 
