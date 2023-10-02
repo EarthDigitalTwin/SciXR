@@ -300,7 +300,7 @@ public class DataLoader : MonoBehaviour {
             }
             else if (dataObject.data.projection == "4326") {
                 
-                //StartCoroutine(OverlayLoader.LoadImageryFromBounds(dataObject.materialOverlay, "HLS_L30_Nadir_BRDF_Adjusted_Reflectance", dataObject.data.projection, bbox, dataObject.data.time));
+                // StartCoroutine(OverlayLoader.LoadImageryFromBounds(dataObject.materialOverlay, "HLS_L30_Nadir_BRDF_Adjusted_Reflectance", dataObject.data.projection, bbox, dataObject.data.time));
                 StartCoroutine(OverlayLoader.LoadImageryFromBounds(dataObject.materialOverlay, "VIIRS_SNPP_CorrectedReflectance_TrueColor", dataObject.data.projection, bbox, dataObject.data.time));
 			}
             if (dataObject.data.type == SerialData.DataType.pointcloud) {
