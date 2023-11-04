@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using VRTK;
 using Text = TMPro.TMP_Text;
 using Dropdown = TMPro.TMP_Dropdown;
 
@@ -60,13 +59,10 @@ public class MeshVRControls : MonoBehaviour {
     //    }
     //}
 
-    private VRTK_InteractableObject inter;
 
     // Use this for initialization
     void Start () {
 		data = GetComponentInParent<DataObject>();
-        inter = GetComponent<VRTK_InteractableObject>();
-        inter.InteractableObjectUngrabbed += OnScaleUngrab;
         foreach (GameObject obj in emissionObjects) {
             Material mat = obj.GetComponent<Renderer>().material;
             if (mat != null)
@@ -77,10 +73,6 @@ public class MeshVRControls : MonoBehaviour {
         data.OnInitComplete.AddListener(UpdateColorbarDropdown);
         data.OnInitComplete.AddListener(RefreshUI);
 	}
-
-    private void OnScaleUngrab(object sender, InteractableObjectEventArgs e) {
-        //Debug.Log(inter.GetSecondaryGrabbingObject());
-    }
 
     public void UpdateColorbarDropdown() {
         colorbarDropdown.ClearOptions();
@@ -248,13 +240,11 @@ public class MeshVRControls : MonoBehaviour {
 
     public void LockBaseToggle(bool status) {
         if(status) {
-            inter.isGrabbable = false;
             foreach (Material mat in emissionMaterials) {
                 mat.SetColor("_EmissionColor", Color.red);
             }
         }
         else {
-            inter.isGrabbable = true;
             foreach (Material mat in emissionMaterials) {
                 mat.SetColor("_EmissionColor", Color.white);
             }

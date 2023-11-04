@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 using Dropdown = TMPro.TMP_Dropdown;
-using VRTK;
 
 public class FileLoadMenu : MonoBehaviour {
     public static Dictionary<string, Mesh> loadedMeshes = new Dictionary<string, Mesh>();
@@ -58,7 +57,7 @@ public class FileLoadMenu : MonoBehaviour {
     public void EnableFileObjects() {
         float delay = 0.1f;
         foreach (Transform child in dropZoneContainer.transform) {
-            child.GetComponent<VRTK_SnapDropZone>().ForceUnsnap();
+            //child.GetComponent<VRTK_SnapDropZone>().ForceUnsnap();
         }
 
         foreach (Transform fileObject in filesContainer.transform) {
@@ -66,7 +65,7 @@ public class FileLoadMenu : MonoBehaviour {
                 
                 LeanTween.delayedCall(delay, () => {
                     fileObject.gameObject.SetActive(true);
-                    fileObject.GetComponent<FileLoadObject>().assignedDropzone.ForceSnap(fileObject.gameObject);
+                    //fileObject.GetComponent<FileLoadObject>().assignedDropzone.ForceSnap(fileObject.gameObject);
                     fileObject.GetComponent<FileLoadObject>().FadeIn();
                 });
                 delay += 0.1f;
@@ -79,7 +78,7 @@ public class FileLoadMenu : MonoBehaviour {
         int numSlots = dropZoneContainer.transform.childCount;
 
         foreach(Transform child in dropZoneContainer.transform) {
-            child.GetComponent<VRTK_SnapDropZone>().ForceUnsnap();
+            //child.GetComponent<VRTK_SnapDropZone>().ForceUnsnap();
         }
 
         foreach (Transform child in filesContainer.transform) {
@@ -94,12 +93,12 @@ public class FileLoadMenu : MonoBehaviour {
             GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
             FileLoadObject file = newFileObj.GetComponent<FileLoadObject>();
             file.file = DataLoader.instance.dataFiles[fileCount];
-            file.assignedDropzone = dropZoneContainer.transform.GetChild(position).GetComponent<VRTK_SnapDropZone>();
+            //file.assignedDropzone = dropZoneContainer.transform.GetChild(position).GetComponent<VRTK_SnapDropZone>();
             file.RefreshMetadata();
             newFileObj.name = DataLoader.instance.dataFiles[fileCount].runtimeName;
             newFileObj.transform.position = dropZoneContainer.transform.GetChild(position).position;
             newFileObj.SetActive(true);
-            file.assignedDropzone.ForceSnap(newFileObj);
+            //file.assignedDropzone.ForceSnap(newFileObj);
             position++;
         }
     }

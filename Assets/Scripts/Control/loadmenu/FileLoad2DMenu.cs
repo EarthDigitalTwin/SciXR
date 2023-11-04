@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 using Dropdown = TMPro.TMP_Dropdown;
-using VRTK;
 using TMPro;
 using UI.Dates;
 using System.IO;

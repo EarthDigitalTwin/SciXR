@@ -320,7 +320,7 @@ public class DataObject : MonoBehaviour {
         Mesh mesh = SerialMesh.MeshDataToMesh(serialMesh, data.type != SerialData.DataType.globe && data.type != SerialData.DataType.pointcloud);
 
         if (data.type == SerialData.DataType.pointcloud) {
-            GetComponentInChildren<ColliderDisableInteractable>().enabled = false;
+            //GetComponentInChildren<ColliderDisableInteractable>().enabled = false;
             subMesh.GetComponent<MeshCollider>().enabled = false;
             mesh.SetIndices(Enumerable.Range(0, vertexCount).ToArray(), MeshTopology.Points, 0);
             materialOverlay.SetTexture("_MainTex", new Texture2D(0, 0));

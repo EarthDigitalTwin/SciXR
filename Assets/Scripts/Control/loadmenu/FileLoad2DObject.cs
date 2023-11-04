@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using VRTK;
 using Text = TMPro.TMP_Text;
 using TMPro;
     

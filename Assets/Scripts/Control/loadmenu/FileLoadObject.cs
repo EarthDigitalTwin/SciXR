@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using VRTK;
 using Text = TMPro.TMP_Text;
 
 public class FileLoadObject : MonoBehaviour{
@@ -26,22 +25,12 @@ public class FileLoadObject : MonoBehaviour{
     public GameObject pointCloudIcon;
     public GameObject newIcon;
 
-    [HideInInspector] public VRTK_SnapDropZone assignedDropzone;
-    VRTK_InteractableObject io;
-    VRTK_Pointer[] pointers;
     PointerEventData lastEventData;
     FileLoadMenu menu;
     GameObject currentIcon;
 
     private void Start() {
         menu = GetComponentInParent<FileLoadMenu>();
-        io = GetComponent<VRTK_InteractableObject>();
-        pointers = FindObjectsOfType<VRTK_Pointer>();
-        foreach(VRTK_Pointer pointer in pointers) {
-            pointer.DestinationMarkerEnter += OnVRPointerEnter;
-            pointer.DestinationMarkerExit += OnVRPointerExit;
-            pointer.DestinationMarkerHover += OnVRPointerClick;
-        }
     }
 
     //void OnEnable() {
@@ -84,13 +73,6 @@ public class FileLoadObject : MonoBehaviour{
 
 
     private void OnDestroy() {
-        if(pointers != null) {
-            foreach (VRTK_Pointer pointer in pointers) {
-                pointer.DestinationMarkerEnter -= OnVRPointerEnter;
-                pointer.DestinationMarkerExit -= OnVRPointerExit;
-                pointer.DestinationMarkerHover -= OnVRPointerClick;
-            }
-        }
     }
 
     public void RefreshMetadata() {
@@ -165,36 +147,7 @@ public class FileLoadObject : MonoBehaviour{
         
     }
 
-    // VR pointer handling
 
-    private void OnVRPointerEnter(object sender, DestinationMarkerEventArgs e) {
-        if (e.target == this.transform) {
-            OnPointerEnter(null);
-        }
-    }
-
-    private void OnVRPointerExit(object sender, DestinationMarkerEventArgs e) {
-        if (e.target == this.transform) {
-            OnPointerExit(null);
-        }
-    }
-
-    bool isClicked = false;
-    bool frameClick = false;
-    private void OnVRPointerClick(object sender, DestinationMarkerEventArgs e) {
-        if(!isClicked && e.controllerReference.scriptAlias.GetComponent<VRTK_ControllerEvents>().triggerPressed) {
-            isClicked = true;
-            frameClick = true;
-        }
-        else if(isClicked && !e.controllerReference.scriptAlias.GetComponent<VRTK_ControllerEvents>().triggerPressed) {
-            isClicked = false;
-        }
-            
-        if (e.target == this.transform && frameClick) {
-            OnPointerClick(null);
-            frameClick = false;
-        }
-    }
 
     // Screen space pointing handling 
     public void OnPointerEnter(PointerEventData eventData) {

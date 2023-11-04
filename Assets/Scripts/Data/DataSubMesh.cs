@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Debug = UnityEngine.Debug;
-using VRTK;
 using System;
 
 public class DataSubMesh : MonoBehaviour,  IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler{
@@ -21,8 +20,6 @@ public class DataSubMesh : MonoBehaviour,  IPointerEnterHandler, IPointerExitHan
         
         public PointerType type;
         public Camera screenCamera;
-        public VRTK_Pointer vrPointer;
-        public VRTK_ControllerEvents vrEvents;
     }
     
     ///
@@ -46,37 +43,17 @@ public class DataSubMesh : MonoBehaviour,  IPointerEnterHandler, IPointerExitHan
     Renderer rend;
     DataObject data;
     new MeshCollider collider;
-    VRTK_InteractableObject io;
-    List<VRTK_Pointer> pointers;
     Dictionary<string, PointerStatus> pointerStatus = new Dictionary<string, PointerStatus>();
 
     void Start() {
         rend = GetComponent<Renderer>();
         collider = GetComponent<MeshCollider>();
         data = GetComponentInParent<DataObject>();
-        io = GetComponent<VRTK_InteractableObject>();
-        pointers = DataLoader.instance.vrPointers;
-        if (pointers != null) {
-            foreach (VRTK_Pointer pointer in pointers) {
-                pointer.DestinationMarkerEnter += OnVRPointerEnter;
-                pointer.DestinationMarkerExit += OnVRPointerExit;
-                //pointer.DestinationMarkerHover += OnVRPointerHover;
-                pointer.SelectionButtonPressed += OnVRSelectionPressed;
-                    
-            }
-        }
+
         infoDisplayPrefab.SetActive(false);
     }
     
     private void OnDestroy() {
-        if(pointers != null) {
-            foreach (VRTK_Pointer pointer in pointers) {
-                pointer.DestinationMarkerEnter -= OnVRPointerEnter;
-                pointer.DestinationMarkerExit -= OnVRPointerExit;
-                //pointer.DestinationMarkerHover -= OnVRPointerHover;
-                pointer.SelectionButtonPressed -= OnVRSelectionPressed;
-            }
-        }
     }
 
     private void Update() {
@@ -134,38 +111,7 @@ public class DataSubMesh : MonoBehaviour,  IPointerEnterHandler, IPointerExitHan
     // Data Lookup from pointer callbacks
 
 
-    private void OnVRPointerEnter(object sender, DestinationMarkerEventArgs e) {
-        if (e.target == this.transform) {
-            PointerStatus currentPointer;
-            string name = e.controllerReference.scriptAlias.name;
-            if (!pointerStatus.ContainsKey(name)) {
-                currentPointer = new PointerStatus();
-                currentPointer.name = name;
-                currentPointer.type = PointerStatus.PointerType.VR;
-                currentPointer.vrPointer = e.controllerReference.scriptAlias.GetComponent<VRTK_Pointer>();
-                currentPointer.vrEvents = e.controllerReference.scriptAlias.GetComponent<VRTK_ControllerEvents>();
-                currentPointer.tooltip = Instantiate(infoDisplayPrefab, tooltipsContainer.transform).GetComponent<TooltipBehavior>();
-                currentPointer.tooltip.gameObject.SetActive(true);
-                currentPointer.enabled = true;
-                pointerStatus.Add(currentPointer.name, currentPointer);
-            }
-            else {
-                currentPointer = pointerStatus[name];
-                currentPointer.tooltip.gameObject.SetActive(true);
-                currentPointer.enabled = true;
-            }
-            ProcessPointer(currentPointer);
-        }
-    }
-    private void OnVRPointerExit(object sender, DestinationMarkerEventArgs e) {
-        if (e.target == this.transform) {
-            if (pointerStatus.ContainsKey(e.controllerReference.scriptAlias.name)) {
-                pointerStatus[e.controllerReference.scriptAlias.name].tooltip.gameObject.SetActive(false);
-                pointerStatus[e.controllerReference.scriptAlias.name].enabled = false;
-            }
-        }
-    }
-    //private void OnVRPointerHover(object sender, DestinationMarkerEventArgs e) {
+   //private void OnVRPointerHover(object sender, DestinationMarkerEventArgs e) {
     //    if (e.target == this.transform) {
     //        if (pointerStatus.ContainsKey(e.controllerReference.scriptAlias.name)) {
     //            Vector3 lookAtVector = pointerStatus[e.controllerReference.scriptAlias.name].tooltip.canvasGroup.transform.position - pointerStatus[e.controllerReference.scriptAlias.name].vrPointer.customOrigin.position;
@@ -174,16 +120,7 @@ public class DataSubMesh : MonoBehaviour,  IPointerEnterHandler, IPointerExitHan
     //    }
     //}
 
-    private void OnVRSelectionPressed(object sender, ControllerInteractionEventArgs e) {
-        PointerStatus pointer = pointerStatus[e.controllerReference.scriptAlias.name];
-        Ray newRay = new Ray(pointer.vrPointer.customOrigin.position, pointer.vrPointer.customOrigin.forward);
-        RaycastHit newHit;
-        if (collider.Raycast(newRay, out newHit, 1000)) {
-            GameObject copiedTooltip = Instantiate(pointer.tooltip.gameObject, pointer.tooltip.transform.parent);
-            copiedTooltip.GetComponentInChildren<Collider>().enabled = true;
-            copiedTooltip.SetActive(true);
-        }
-    }
+    
 
     public void OnPointerEnter(PointerEventData eventData) {
         PointerStatus currentPointer;
@@ -230,9 +167,9 @@ public class DataSubMesh : MonoBehaviour,  IPointerEnterHandler, IPointerExitHan
         if(pointer.type == PointerStatus.PointerType.Camera) {
             ray = pointer.screenCamera.ScreenPointToRay(Input.mousePosition);
         }
-        else if (pointer.type == PointerStatus.PointerType.VR) {
-            ray = new Ray(pointer.vrPointer.customOrigin.position, pointer.vrPointer.customOrigin.forward);
-        }
+        // else if (pointer.type == PointerStatus.PointerType.VR) {
+        //     ray = new Ray(pointer.vrPointer.customOrigin.position, pointer.vrPointer.customOrigin.forward);
+        // }
         if (collider.Raycast(ray, out hitInfo, 10)) {
             pointer.tooltip.transform.position = hitInfo.point;
             SetInfo(hitInfo.triangleIndex, hitInfo.point, pointer.tooltip); 
@@ -246,9 +183,9 @@ public class DataSubMesh : MonoBehaviour,  IPointerEnterHandler, IPointerExitHan
             if (pointer.type == PointerStatus.PointerType.Camera) {
                 lookAtVector = pointer.tooltip.canvasGroup.transform.position - pointer.screenCamera.transform.position;
             }
-            else if(pointer.type == PointerStatus.PointerType.VR) {
-                lookAtVector = pointer.tooltip.canvasGroup.transform.position - pointer.vrPointer.customOrigin.position;
-            }
+            // else if(pointer.type == PointerStatus.PointerType.VR) {
+            //     lookAtVector = pointer.tooltip.canvasGroup.transform.position - pointer.vrPointer.customOrigin.position;
+            // }
             pointer.tooltip.canvasGroup.transform.rotation = Quaternion.LookRotation(lookAtVector);
         }
         else {

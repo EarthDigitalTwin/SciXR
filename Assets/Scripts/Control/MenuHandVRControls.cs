@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using VRTK;
 
 public class MenuHandVRControls : MonoBehaviour {
     public GameObject loadMenu;
@@ -15,25 +14,6 @@ public class MenuHandVRControls : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        //Button action assignments
-        GetComponent<VRTK_ControllerEvents>().ButtonTwoPressed += new ControllerInteractionEventHandler(TopButtonPressed);
-
-        //Init 
-        //mainMenuGroup = GetComponentInChildren<CanvasGroup>();
-        //Transform headset = VRTK_DeviceFinder.HeadsetCamera();
-        //if(headset != null)
-        //{
-        //    Canvas[] canvases = FindObjectsOfType<Canvas>();
-        //    foreach (Canvas canvas in canvases) {
-        //        if (canvas.renderMode == RenderMode.WorldSpace) {
-        //            canvas.worldCamera = headset.GetComponent<Camera>();
-        //        }
-        //    }
-        //}
-    }
-
-    void TopButtonPressed(object sender, ControllerInteractionEventArgs e) {
-        CloseClick();
     }
 
     //Main Menu Button Callbacks
@@ -118,10 +98,6 @@ public class MenuHandVRControls : MonoBehaviour {
 
     //Helpers
 	private Vector3 GetFrontOfCamera(float height = 1.2f) {
-        Transform headset = VRTK.VRTK_DeviceFinder.HeadsetCamera().transform;
-        Vector3 headsetForward = new Vector3(headset.forward.x, 0, headset.forward.z);
-        headsetForward.Normalize();
-        Vector3 finalPosition = headset.position + headsetForward * 0.6f;
-        return new Vector3(finalPosition.x, height, finalPosition.z);
+        return new Vector3(0, 0, 0);
     }
 }

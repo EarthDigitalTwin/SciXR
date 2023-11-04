@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
-using VRTK;
 //Aliases for TMPro
 using Text = TMPro.TMP_Text;
 //using Reader = ModelJSReader;
@@ -38,7 +37,6 @@ public class DataLoader : MonoBehaviour {
 	public Material smallPointCloudMaterial;
     public Material defaultMaterialUI;
     public List<Texture2D> overlayTextures;
-    public List<VRTK_Pointer> vrPointers = new List<VRTK_Pointer>();
 
     public DataLoadEvent OnDataLoad;
 

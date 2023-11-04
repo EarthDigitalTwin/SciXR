@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR;
 //using UnityEditor;
-using VRTK;
 
 public class SceneController : MonoBehaviour {
     public bool manualSceneLoad = false;
