@@ -234,7 +234,7 @@ public class FileLoad2DMenu : MonoBehaviour {
 
     public void Refresh(string filter) {
 
-        //Debug.Log("File Container: " + filesContainer.name);
+        Debug.Log("File Container: " + filesContainer.name);
         foreach (Transform child in filesContainer.transform) {
             if (child != fileObjectPrefab.transform)
                 Destroy(child.gameObject);
@@ -244,11 +244,11 @@ public class FileLoad2DMenu : MonoBehaviour {
             return;
 
         int filteredFiles = 0;
-        //Debug.Log(filter);
+        Debug.Log(filter);
         foreach (SerialFile dataFile in DataLoader.instance.dataFiles) {
-            //Debug.Log(dataFile.fileName);
+            Debug.Log(dataFile.fileName);
             if (dataFile.fileName.Contains(filter)) {
-                //Debug.Log("Filterd" + dataFile.fileName);
+                Debug.Log("Filterd" + dataFile.fileName);
                 filteredFiles++;
             }
         }
@@ -267,6 +267,11 @@ public class FileLoad2DMenu : MonoBehaviour {
                 Debug.Log("User files");
                 UserFiles(filter);
             }
+        } else {
+            Debug.Log("No slider found, defaulting to user files");
+            UserFiles(filter);
+            // maybe i want to do this only when we've failed to find
+            // *both* sliders?
         }
 
         Slider FilesSliderVR = GameObject.Find("FilesSliderVR")?.GetComponent<Slider>();
@@ -282,6 +287,8 @@ public class FileLoad2DMenu : MonoBehaviour {
                 Debug.Log("VR User files");
                 UserFiles(filter);
             }
+        } else {
+            Debug.Log("No VR slider found");
         }
     }
 
