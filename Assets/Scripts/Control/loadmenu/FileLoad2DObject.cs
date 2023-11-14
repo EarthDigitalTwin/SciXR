@@ -157,7 +157,7 @@ public class FileLoad2DObject : MonoBehaviour {
             menu.BeginDisable();
             Slider userFilesSlider = GameObject.Find("FilesSlider")?.GetComponent<Slider>();
         
-            if (userFilesSlider.value == 0){  //SDAP 
+            if (userFilesSlider?.value == 0){  //SDAP 
                 Debug.Log("LoadData SDAP Files called");
                 
                 // Retrieve the clicked button
@@ -199,7 +199,7 @@ public class FileLoad2DObject : MonoBehaviour {
             eulerAngles.z = 0;
 
             Slider userFilesSliderVR = GameObject.Find("FilesSliderVR")?.GetComponent<Slider>();
-            if (userFilesSliderVR.value == 0){  //SDAP 
+            if (userFilesSliderVR?.value == 0){  //SDAP 
 
                 // Retrieve the clicked button
                 GameObject clickedButton = EventSystem.current.currentSelectedGameObject;

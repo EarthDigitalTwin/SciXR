@@ -12,6 +12,8 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 //Aliases for TMPro
 using Text = TMPro.TMP_Text;
+using Unity.Services.Analytics.Platform;
+using UnityEngine.Networking;
 //using Reader = ModelJSReader;
 
 public class DataLoader : MonoBehaviour {
@@ -47,6 +49,7 @@ public class DataLoader : MonoBehaviour {
 
     // Use this for initialization
     void Start() {
+        Debug.Log("DataLoader start");
 
         FileSystemWatcher watcher = new FileSystemWatcher();
         watcher.Path = dataPath;
@@ -80,31 +83,79 @@ public class DataLoader : MonoBehaviour {
         presetColorbars = colorbarReader.ReadColorbarsFromPath(colorbarPath);
     }
 
+    IEnumerator LoadFilesAndroid() {
+        string[] fileNames = { "ArgoTemperatureMean_.ply", "mdcolumbia.js", "mdglobe.js", "mdgreenland.js", "mdhaig.js", "mdupernavik.js", "Typhoon_Trami.ply" };
+
+        foreach (string fileName in fileNames) {
+            string path = "jar:file://" + Application.dataPath + "!/assets" + dataPath + "/" + fileName;
+
+            // TODO add other file types. Right now, I've only refactored the ModelJSReader to work
+            // with these async web requests.
+            if (path.Contains(".js")) {
+                Action<string> loadMetadataAndAdd = (string rawData) =>
+                {
+                    SerialFile newDataFile = ModelJSReader.MetadataFromRaw(rawData, fileName, path, null);
+                    dataFiles.Add(newDataFile);
+                };
+                yield return LoadFileAndroid(path, loadMetadataAndAdd);
+            }
+        }
+    }
+
+    IEnumerator LoadFileAndroid(string path, Action<string> callback) {
+
+        using (UnityWebRequest www = UnityWebRequest.Get(path))
+        {
+            yield return www.SendWebRequest();
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.Log(www.error);
+            }
+            else
+            {
+                Debug.Log("UnityWebRequest success! Calling callback...");
+                callback(www.downloadHandler.text);
+            }
+        }
+    }
+
     void LoadFiles() {
         //DataSet ds = DataSet.Open("filepath.nc?openMode=create");
 
         dataFiles = new List<SerialFile>();
-        string[] files = Directory.GetFiles(dataPath);
+        string realDataPath = "";
+        // Load files from StreamingAssets. Different on different platforms
+        if (Application.platform == RuntimePlatform.Android) {
+            // for Quest, you have to use UnityWebRequest to get the files
+            Debug.Log("starting Android file load coroutine");
+            StartCoroutine(LoadFilesAndroid());
+        } else {
+            // All other platforms, where we can use normal file IO
+            string path = Path.Combine(Application.dataPath, Application.streamingAssetsPath, dataPath);
 
-        foreach (string fileFull in files) {
-            if (fileFull.Contains(".js")) {
-                SerialFile newDataFile = ModelJSReader.MetadataFromPath(fileFull);
-                dataFiles.Add(newDataFile);
-            }
-            else if (fileFull.Contains(".ply")) {
-                SerialFile newDataFile = PLYReader.MetadataFromPath(fileFull);
-                dataFiles.Add(newDataFile);
-            } 
-            else if (fileFull.Contains(".mat")) {
-                SerialFile newDataFile = MatLabReader.MetadataFromPath(fileFull);
-                dataFiles.Add(newDataFile);
-            }
-            else if (fileFull.Contains(".sdap"))
-            {
-                SerialFile newDataFile = PLYReader.MetadataFromPath(fileFull);
-                dataFiles.Add(newDataFile);
+            string[] files = Directory.GetFiles(dataPath);
+
+            foreach (string fileFull in files) {
+                if (fileFull.Contains(".js")) {
+                    SerialFile newDataFile = ModelJSReader.MetadataFromPath(fileFull);
+                    dataFiles.Add(newDataFile);
+                }
+                else if (fileFull.Contains(".ply")) {
+                    SerialFile newDataFile = PLYReader.MetadataFromPath(fileFull);
+                    dataFiles.Add(newDataFile);
+                } 
+                else if (fileFull.Contains(".mat")) {
+                    SerialFile newDataFile = MatLabReader.MetadataFromPath(fileFull);
+                    dataFiles.Add(newDataFile);
+                }
+                else if (fileFull.Contains(".sdap"))
+                {
+                    SerialFile newDataFile = PLYReader.MetadataFromPath(fileFull);
+                    dataFiles.Add(newDataFile);
+                }
             }
         }
+        
         if (screenFileLoadContainer.activeSelf) {
             //screenFileLoadContainer.GetComponent<FileLoadMenu>()?.Refresh();
             screenFileLoadContainer.GetComponent<FileLoad2DMenu>()?.Refresh("");
@@ -196,7 +247,19 @@ public class DataLoader : MonoBehaviour {
         watch.Start();
         SerialData serialData = null;
         if (fileToLoad.fileName.EndsWith(".js")) {
-            serialData = ModelJSReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
+            // right now only JS webrequest loading is implemented
+            if (Application.platform == RuntimePlatform.Android) 
+            {
+                void readModelFromRaw(string rawData)
+                {
+                    serialData = ModelJSReader.ReadModelFromRaw(rawData, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
+                }
+                StartCoroutine(LoadFileAndroid(fileToLoad.path, readModelFromRaw));
+            }
+            else 
+            {
+                serialData = ModelJSReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
+            }
         }
         else if (fileToLoad.fileName.EndsWith(".ply")) {
             serialData = PLYReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);

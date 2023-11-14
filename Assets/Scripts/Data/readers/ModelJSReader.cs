@@ -20,17 +20,18 @@ public class ModelJSReader {
 
     static List<string> commonVariables = new List<string> {"Surface","Base","geometry.base","geometry.surface","geometry.bed"};
 
-    public static SerialFile MetadataFromPath(string path) {
-        SerialFile dataFile = new SerialFile();
+    public static SerialFile MetadataFromRaw(string rawData, string fileName, string path, DateTime? lastModified) {
+        SerialFile dataFile = new SerialFile
+        {
+            fileName = fileName,
+            path = path,
+            lastModified = (DateTime) ((lastModified == null) ? DateTime.Now : lastModified),
+            // Init bools
+            hasResults = false,
+            hasOverlay = false
+        };
 
-        dataFile.fileName = Path.GetFileName(path);
-        dataFile.path = path;
-        dataFile.lastModified = File.GetLastWriteTime(path);
-        // Init bools
-        dataFile.hasResults = false;
-        dataFile.hasOverlay = false; 
-
-        string[] jsOutput = File.ReadAllLines(path);
+        string[] jsOutput = rawData.Split('\n');
         bool typeSet = false;
 
         // Get vertex count
@@ -77,22 +78,29 @@ public class ModelJSReader {
         return dataFile;
     }
 
-    public static SerialData ReadModelFromPath(string path, SerialFile dataFile, DataObject dataObject, float loadWeight) {
-        SerialData data = new SerialData();
-        string[] jsOutput = File.ReadAllLines(path);
-        if (dataFile == null)
-            dataFile = MetadataFromPath(path);
+    public static SerialFile MetadataFromPath(string path) {
+        return MetadataFromRaw(File.ReadAllText(path), Path.GetFileName(path), path, File.GetLastWriteTime(path));
+    }
 
-        //Assign from DataFile
-        data.identifier = dataFile.identifier;
-        data.vertexCount = dataFile.vertexCount;
-        data.triangleCount = dataFile.triangleCount;
-        data.notes = dataFile.notes;
-            
-        data.fileName = dataFile.fileName;
-        data.filePath = dataFile.path;
-        data.lastModified = dataFile.lastModified;
-        data.runtimeName = dataFile.runtimeName;
+    public static SerialData ReadModelFromRaw(string rawData, SerialFile dataFile, DataObject dataObject, float loadWeight) {
+        string[] jsOutput = rawData.Split('\n');
+        if (dataFile == null)
+            dataFile = MetadataFromRaw(rawData, "", "", DateTime.Now);
+
+
+        SerialData data = new SerialData
+        {
+            //Assign from DataFile
+            identifier = dataFile.identifier,
+            vertexCount = dataFile.vertexCount,
+            triangleCount = dataFile.triangleCount,
+            notes = dataFile.notes,
+
+            fileName = dataFile.fileName,
+            filePath = dataFile.path,
+            lastModified = dataFile.lastModified,
+            runtimeName = dataFile.runtimeName
+        };
 
         int line = 0;
         foreach (string currentLine in jsOutput) {
@@ -214,6 +222,11 @@ public class ModelJSReader {
         //}
 
         return data;
+
+    }
+
+    public static SerialData ReadModelFromPath(string path, SerialFile dataFile, DataObject dataObject, float loadWeight) {
+        return ReadModelFromRaw(File.ReadAllText(path), dataFile, dataObject, loadWeight);
     }
 
     private static List<SerialData.DataStep> ParseResults (SimpleJSON.JSONNode resultsData) {
