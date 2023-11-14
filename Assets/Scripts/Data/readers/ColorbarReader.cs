@@ -11,11 +11,13 @@ public class ColorbarReader {
 
 	private Dictionary<string, Colorbar> colorbars = new Dictionary<string, Colorbar>{};
 
-	public List<Colorbar> ReadColorbarsFromPath(string path)
+
+	public List<Colorbar> ReadColorbarsFromRaw(string rawData) 
 	{
 		Stopwatch watch = new Stopwatch();
 		watch.Start();
-		string[] jsOutput = File.ReadAllLines(path);
+
+		string[] jsOutput = rawData.Split('\n');
 
 		// Get colorbar
 		string colorbarName = null;
@@ -55,6 +57,11 @@ public class ColorbarReader {
 		watch.Stop();
 		Debug.Log(watch.Elapsed);
 		return listColorbars;
+	}
+
+	public List<Colorbar> ReadColorbarsFromPath(string path)
+	{
+		return ReadColorbarsFromRaw(File.ReadAllText(path));
 	}
 
     public Texture2D GenerateColorTexture(Colorbar colormap) {

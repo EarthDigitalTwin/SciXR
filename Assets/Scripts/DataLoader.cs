@@ -80,14 +80,26 @@ public class DataLoader : MonoBehaviour {
     // Callbacks
     void LoadColormaps() {
         ColorbarReader colorbarReader = new ColorbarReader();
-        presetColorbars = colorbarReader.ReadColorbarsFromPath(colorbarPath);
+        if (Application.platform == RuntimePlatform.Android) 
+        {
+            string streamingColorbarPath = Path.Combine(Application.streamingAssetsPath, colorbarPath);
+            void readColorbarsFromRaw(string rawData)
+            {
+                presetColorbars = colorbarReader.ReadColorbarsFromRaw(rawData);
+            }
+            StartCoroutine(LoadFileAndroid(streamingColorbarPath, readColorbarsFromRaw));
+        }
+        else 
+        {
+            presetColorbars = colorbarReader.ReadColorbarsFromPath(colorbarPath);
+        }
     }
 
     IEnumerator LoadFilesAndroid() {
         string[] fileNames = { "ArgoTemperatureMean_.ply", "mdcolumbia.js", "mdglobe.js", "mdgreenland.js", "mdhaig.js", "mdupernavik.js", "Typhoon_Trami.ply" };
 
         foreach (string fileName in fileNames) {
-            string path = "jar:file://" + Application.dataPath + "!/assets" + dataPath + "/" + fileName;
+            string path = Path.Combine(Application.streamingAssetsPath, dataPath, fileName);
 
             // TODO add other file types. Right now, I've only refactored the ModelJSReader to work
             // with these async web requests.
