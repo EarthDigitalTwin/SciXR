@@ -51,24 +51,34 @@ public class DataLoader : MonoBehaviour {
     void Start() {
         Debug.Log("DataLoader start");
 
-        FileSystemWatcher watcher = new FileSystemWatcher();
-        watcher.Path = dataPath;
-        watcher.Filter = "*.js";
-        watcher.NotifyFilter = NotifyFilters.LastAccess |
-                         NotifyFilters.LastWrite |
-                         NotifyFilters.FileName |
-                         NotifyFilters.DirectoryName |
-                         NotifyFilters.CreationTime |
-                         NotifyFilters.Size |
-                         NotifyFilters.Attributes ;
+        if (Application.platform != RuntimePlatform.Android) {
+            // Watch for changes to data directory.
+            // Ideally we would also do this on Android, but it's too complex rn,
+            // and we don't expect to be adding new data files on Android.
+            FileSystemWatcher watcher = new FileSystemWatcher
+            {
+                Path = dataPath,
+                Filter = "*.js",
+                NotifyFilter = NotifyFilters.LastAccess |
+                             NotifyFilters.LastWrite |
+                             NotifyFilters.FileName |
+                             NotifyFilters.DirectoryName |
+                             NotifyFilters.CreationTime |
+                             NotifyFilters.Size |
+                             NotifyFilters.Attributes,
 
-        watcher.IncludeSubdirectories = true;
-        watcher.Changed += OnDirectoryChange;
-        watcher.Created += OnDirectoryChange;
-        watcher.EnableRaisingEvents = true;
+                IncludeSubdirectories = true
+            };
+            watcher.Changed += OnDirectoryChange;
+            watcher.Created += OnDirectoryChange;
+            watcher.EnableRaisingEvents = true;
+        }
+
 
         instance = this;
+        Debug.Log("DataLoader instance set; loading colormaps and files...");
         LoadColormaps();
+        Debug.Log("Done loading colormaps. Loading data files...");
         LoadFiles();
     }
 
@@ -79,9 +89,11 @@ public class DataLoader : MonoBehaviour {
 
     // Callbacks
     void LoadColormaps() {
+        Debug.Log("Loading colormaps...");
         ColorbarReader colorbarReader = new ColorbarReader();
         if (Application.platform == RuntimePlatform.Android) 
         {
+            Debug.Log("Detected Android platform");
             string streamingColorbarPath = Path.Combine(Application.streamingAssetsPath, colorbarPath);
             void readColorbarsFromRaw(string rawData)
             {
@@ -115,7 +127,7 @@ public class DataLoader : MonoBehaviour {
     }
 
     IEnumerator LoadFileAndroid(string path, Action<string> callback) {
-
+        Debug.Log("Loading file from Android with web request: " + path);
         using (UnityWebRequest www = UnityWebRequest.Get(path))
         {
             yield return www.SendWebRequest();
@@ -135,7 +147,6 @@ public class DataLoader : MonoBehaviour {
         //DataSet ds = DataSet.Open("filepath.nc?openMode=create");
 
         dataFiles = new List<SerialFile>();
-        string realDataPath = "";
         // Load files from StreamingAssets. Different on different platforms
         if (Application.platform == RuntimePlatform.Android) {
             // for Quest, you have to use UnityWebRequest to get the files
