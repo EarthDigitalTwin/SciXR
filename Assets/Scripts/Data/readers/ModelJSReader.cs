@@ -75,6 +75,8 @@ public class ModelJSReader {
             dataFile.type = SerialData.DataType.flat;
         if (dataFile.identifier == null || dataFile.identifier.Trim() == "")
             dataFile.identifier = Path.GetFileName(path);
+
+        Debug.Log("Done reading metadata from raw for " + fileName);
         return dataFile;
     }
 
@@ -83,6 +85,8 @@ public class ModelJSReader {
     }
 
     public static SerialData ReadModelFromRaw(string rawData, SerialFile dataFile, DataObject dataObject, float loadWeight) {
+        Debug.Log("Reading model from raw for " + dataFile.fileName + "...");
+
         string[] jsOutput = rawData.Split('\n');
         if (dataFile == null)
             dataFile = MetadataFromRaw(rawData, "", "", DateTime.Now);
@@ -220,7 +224,7 @@ public class ModelJSReader {
         //foreach(String result in newData.vars.Keys) {
         //    Debug.Log(result);
         //}
-
+        Debug.Log("Done reading model from raw for " + dataFile.fileName);
         return data;
 
     }

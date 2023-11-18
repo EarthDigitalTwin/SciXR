@@ -207,6 +207,7 @@ public class DataLoader : MonoBehaviour {
     }
 
     public void CreateDataObject(SerialFile dataFile, Vector3 position, Vector3 eulerAngles) {
+        Debug.Log("Creating data object for " + dataFile.identifier + " at " + position + " with rotation " + eulerAngles);
         //Instantiate data object with metadata from file load, then fire multithreaded load
         GameObject newDataObj = Instantiate(dataPrefab);
         newDataObj.SetActive(true);
@@ -254,7 +255,12 @@ public class DataLoader : MonoBehaviour {
         DesktopInterface.instance.SetTarget(dataObject.GetComponentInChildren<MeshVRControls>().transform);
 
         // Fire off data reading task
-        Task dataRead = Task.Run(() => { LoadDataAsync(dataFile, dataObject); });
+        if (Application.platform != RuntimePlatform.Android) {
+            Task dataRead = Task.Run(() => { LoadDataAsync(dataFile, dataObject); });
+        } else {
+            // Seems like threading doesn't work on Android. LoadDataAsync also has special handling for Android
+            LoadDataAsync(dataFile, dataObject);
+        }
 
         // Make it synchronouse instead!
         //LoadDataAsync(dataFile, dataObject);
@@ -263,59 +269,75 @@ public class DataLoader : MonoBehaviour {
     // Populate serialData and serialMesh from fileToLoad, then send back to main thread for processing
     void LoadDataAsync(SerialFile fileToLoad, DataObject dataObject) {
         Stopwatch watch = new Stopwatch();
-        Debug.Log(string.Format("Task={0}, Thread={1}", Task.CurrentId, Thread.CurrentThread.ManagedThreadId));
-        Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Lowest;
+        if (Application.platform != RuntimePlatform.Android) {
+            Debug.Log(string.Format("LoadDataAsync non-Android with Task={0}, Thread={1} for fileToLoad.fileName {2}", Task.CurrentId, Thread.CurrentThread.ManagedThreadId, fileToLoad.fileName));
+            Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Lowest;
+        } else {
+            Debug.Log("LoadDataAsync Android with fileToLoad.fileName " + fileToLoad.fileName);
+        }
 
         // Populate serialData from data file and assign it (and a few other fields) to dataObject
-        watch.Start();
         SerialData serialData = null;
-        if (fileToLoad.fileName.EndsWith(".js")) {
-            // right now only JS webrequest loading is implemented
-            if (Application.platform == RuntimePlatform.Android) 
+        SerialMesh serialMesh = null;
+
+        // Helper function to process serialData and assign to dataObject. This is called
+        // from the coroutine's callback if we're in Android.
+        void processSerialData(SerialData serialData) {
+            watch.Start();
+
+            dataObject.data = serialData;
+            dataObject.currentExtrude = serialData.zIndexDefault;
+            dataObject.currentColor = serialData.colorIndexDefault;
+
+            // Populate serialMesh from serialData created by ReadModel functions before this is called
+            serialMesh = dataObject.GenerateMeshData(serialData);
+
+            //Process results of two big process above
+            dataObject.type = serialData.type;
+            if (serialData.type == SerialData.DataType.globe)
             {
-                void readModelFromRaw(string rawData)
-                {
-                    serialData = ModelJSReader.ReadModelFromRaw(rawData, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
-                }
-                StartCoroutine(LoadFileAndroid(fileToLoad.path, readModelFromRaw));
+                dataObject.triColorMode = true;
             }
-            else 
+
+            watch.Stop();
+            Debug.Log("processSerialData finished in " + watch.Elapsed);
+        }
+
+
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            Debug.Log("Detected Android platform and loading JS file with web request: " + fileToLoad.path);
+            void readModelFromRaw(string rawData)
+            {
+                serialData = ModelJSReader.ReadModelFromRaw(rawData, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
+                processSerialData(serialData);
+                LoadDataCallback(dataObject, serialMesh);
+            }
+            Debug.Log("Starting coroutine...");
+            StartCoroutine(LoadFileAndroid(fileToLoad.path, readModelFromRaw));
+        }
+        else {
+            if (fileToLoad.fileName.EndsWith(".js"))
             {
                 serialData = ModelJSReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
             }
+            else if (fileToLoad.fileName.EndsWith(".ply"))
+            {
+                serialData = PLYReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
+            }
+            else if (fileToLoad.fileName.EndsWith(".sdap"))
+            {
+                serialData = PLYReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
+            }
+            processSerialData(serialData);
+            // Send back to main thread
+            ThreadManager.instance.callbacks.Add(() => LoadDataCallback(dataObject, serialMesh));
         }
-        else if (fileToLoad.fileName.EndsWith(".ply")) {
-            serialData = PLYReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
-        }
-        else if (fileToLoad.fileName.EndsWith(".sdap"))
-        {
-            serialData = PLYReader.ReadModelFromPath(fileToLoad.path, fileToLoad, dataObject, (fileToLoad.hasResults) ? 0.9f : 1);
-        }
-        dataObject.data = serialData;
-        dataObject.currentExtrude = serialData.zIndexDefault;
-        dataObject.currentColor = serialData.colorIndexDefault;
-        watch.Stop();
-        Debug.Log("Reader data generation finished in " + watch.Elapsed);
-
-        // Populate serialMesh from serialData created above
-        watch.Reset();
-        watch.Start();
-        SerialMesh serialMesh = dataObject.GenerateMeshData(serialData);
-        watch.Stop();
-        Debug.Log("Mesh from data generation finished in " + watch.Elapsed);
-
-        //Process results of two big process above
-        dataObject.type = serialData.type;
-        if (serialData.type == SerialData.DataType.globe) {
-            dataObject.triColorMode = true;
-        }
-
-        // Send back to main thread
-        ThreadManager.instance.callbacks.Add(() => LoadDataCallback(dataObject, serialMesh));
     }
 
     //Process data results and assign to dataObject (generate the Unity Mesh and preview)
     void LoadDataCallback(DataObject dataObject, SerialMesh serialMesh) {
+        Debug.Log("LoadDataCallback called for " + dataObject.identifier);
         Stopwatch watch = new Stopwatch();
 
         if (dataObject.data.projection == null) {
