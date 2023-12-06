@@ -109,16 +109,19 @@ public class FileLoad2DMenu : MonoBehaviour {
                 Debug.Log("NexusObjects:");
                 Debug.Log(NexusObjects);
 
-                for (int fileCount = 0; fileCount < NexusObjects.Count; fileCount++)
+                foreach (NexusObject obj in NexusObjects)
                 {
-                    Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
-                    NexusObject obj = NexusObjects[fileCount];
+                    Debug.Log("In foreach with NexusObject: " + obj.shortName);
                     //if (obj.shortName.Contains(filter)) {
                     GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
                     newFileObj.name = obj.shortName; // sets button name
 
                     FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>();
                     string name = obj.shortName;
+                    if (name.Length > 20) {
+                        // shorten name if too long
+                        name = name.Substring(0, 20) + "...";
+                    }
                     file.fileName.text = name;
 
                     if (obj.iso_start != null && obj.iso_end != null)
@@ -132,9 +135,11 @@ public class FileLoad2DMenu : MonoBehaviour {
                     {
                         file.secondRowInfo.text = " ";
                     }
-                    //file.RefreshMetadata();
+                    Debug.Log("In SDAPFiles, File: " + file);
 
                     newFileObj.SetActive(true);
+                    Debug.Log("In SDAPFiles, newFileObj: " + newFileObj);
+                    Debug.Log("Its transform: " + newFileObj.transform);
                     position++;
                 }
             }));
@@ -313,6 +318,7 @@ public class FileLoad2DMenu : MonoBehaviour {
     }
     
     public void generateSDAPInstance(string identifier){
+        Debug.Log("in generateSDAPInstance");
         bool autoPosition = true;
         Vector3 position = Vector3.zero;
         Vector3 eulerAngles = Vector3.zero;
@@ -376,6 +382,7 @@ public class FileLoad2DMenu : MonoBehaviour {
 
     public void handleInput()
     {
+        Debug.Log("in handle input");
         DatePicker_DateRange dateField = GameObject.Find("DatePicker")?.GetComponent<DatePicker_DateRange>();
         UI.Dates.SerializableDate startDate = dateField.FromDate;
         UI.Dates.SerializableDate endDate = dateField.ToDate;
