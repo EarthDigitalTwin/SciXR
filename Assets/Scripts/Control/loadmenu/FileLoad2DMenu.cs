@@ -9,6 +9,7 @@ using UI.Dates;
 using System.IO;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
+using System.Net;
 
 public class FileLoad2DMenu : MonoBehaviour {
 
@@ -35,9 +36,9 @@ public class FileLoad2DMenu : MonoBehaviour {
             Refresh("");
         }
 
-        if(menuCanvas.name == "FileSelection_2D_VR"){
-            RefreshVR("");
-        }
+        // if(menuCanvas.name == "FileSelection_2D_VR"){
+        //     RefreshVR("");
+        // }
 
         foreach (Transform fileObject in filesContainer.transform) {
             fileObject.gameObject.SetActive(false);
@@ -102,32 +103,44 @@ public class FileLoad2DMenu : MonoBehaviour {
         int numSlots = 10;
 
         // SDAP FILES
-        List<NexusObject> NexusObjects = NexusRequest.PerformRequest();
+        Debug.Log("Doing Nexus request...");
+        try {
+            StartCoroutine(NexusRequest.PerformRequest((List<NexusObject> NexusObjects) => {
+                Debug.Log("NexusObjects:");
+                Debug.Log(NexusObjects);
 
-        for (int fileCount = 0; fileCount < NexusObjects.Count; fileCount++) {
-            //Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
-            NexusObject obj = NexusObjects[fileCount];
-            //if (obj.shortName.Contains(filter)) {
-            GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
-            newFileObj.name = obj.shortName; // sets button name
+                for (int fileCount = 0; fileCount < NexusObjects.Count; fileCount++)
+                {
+                    Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
+                    NexusObject obj = NexusObjects[fileCount];
+                    //if (obj.shortName.Contains(filter)) {
+                    GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
+                    newFileObj.name = obj.shortName; // sets button name
 
-            FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>();
-            string name = obj.shortName;
-            file.fileName.text = name;
+                    FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>();
+                    string name = obj.shortName;
+                    file.fileName.text = name;
 
-            if(obj.iso_start != null && obj.iso_end != null){
-                string iso_start = obj.iso_start.Substring(0, 10);
-                string iso_end = obj.iso_end.Substring(0, 10);
-                string date = iso_start + " - " + iso_end; 
-                file.secondRowInfo.text = date;
-            }
-            else {
-                file.secondRowInfo.text = " ";
-            }
-            //file.RefreshMetadata();
+                    if (obj.iso_start != null && obj.iso_end != null)
+                    {
+                        string iso_start = obj.iso_start.Substring(0, 10);
+                        string iso_end = obj.iso_end.Substring(0, 10);
+                        string date = iso_start + " - " + iso_end;
+                        file.secondRowInfo.text = date;
+                    }
+                    else
+                    {
+                        file.secondRowInfo.text = " ";
+                    }
+                    //file.RefreshMetadata();
 
-            newFileObj.SetActive(true);
-            position++;
+                    newFileObj.SetActive(true);
+                    position++;
+                }
+            }));
+
+        } catch (WebException ex) {
+            Debug.LogError("Error occurred while loading SDAP Nexus: " + ex.Message);
         }
     }
 
@@ -153,84 +166,84 @@ public class FileLoad2DMenu : MonoBehaviour {
         }
     }
 
-    public void RefreshVR(string filter){
-        int position = 0;
-        int numSlots = 10;
-        GameObject filesContainer = GameObject.Find("ContentVR");
-        Debug.Log("fcn" + filesContainer);
+    // public void RefreshVR(string filter){
+    //     int position = 0;
+    //     int numSlots = 10;
+    //     GameObject filesContainer = GameObject.Find("ContentVR");
+    //     Debug.Log("fcn" + filesContainer);
 
-        foreach (Transform child in filesContainer.transform) {
-            if (child != fileObjectPrefab.transform)
-                Destroy(child.gameObject);
-        }
+    //     foreach (Transform child in filesContainer.transform) {
+    //         if (child != fileObjectPrefab.transform)
+    //             Destroy(child.gameObject);
+    //     }
 
-        if (DataLoader.instance?.dataFiles == null)
-            return;
+    //     if (DataLoader.instance?.dataFiles == null)
+    //         return;
 
-        int filteredFiles = 0;
-        foreach (SerialFile dataFile in DataLoader.instance.dataFiles) {
-            if (dataFile.fileName.Contains(filter)) {
-                filteredFiles++;
-            }
-        }
+    //     int filteredFiles = 0;
+    //     foreach (SerialFile dataFile in DataLoader.instance.dataFiles) {
+    //         if (dataFile.fileName.Contains(filter)) {
+    //             filteredFiles++;
+    //         }
+    //     }
 
-        Slider FilesSliderVR = GameObject.Find("FilesSliderVR")?.GetComponent<Slider>();
-        Debug.Log("RefreshVR " + FilesSliderVR);
-        if(FilesSliderVR != null){
-            if(FilesSliderVR.value == 0){
-                Debug.Log("VR SDAP files");
+    //     Slider FilesSliderVR = GameObject.Find("FilesSliderVR")?.GetComponent<Slider>();
+    //     Debug.Log("RefreshVR " + FilesSliderVR);
+    //     if(FilesSliderVR != null){
+    //         if(FilesSliderVR.value == 0){
+    //             Debug.Log("VR SDAP files");
 
-                // SDAP FILES
-                List<NexusObject> NexusObjects = NexusRequest.PerformRequest();
+    //             // SDAP FILES
+    //             List<NexusObject> NexusObjects = NexusRequest.PerformRequest();
 
-                for (int fileCount = 0; fileCount < NexusObjects.Count; fileCount++) {
-                    //Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
-                    NexusObject obj = NexusObjects[fileCount];
-                    //if (obj.shortName.Contains(filter)) {
-                    GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
-                    newFileObj.name = obj.shortName; // sets button name
+    //             for (int fileCount = 0; fileCount < NexusObjects.Count; fileCount++) {
+    //                 //Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
+    //                 NexusObject obj = NexusObjects[fileCount];
+    //                 //if (obj.shortName.Contains(filter)) {
+    //                 GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
+    //                 newFileObj.name = obj.shortName; // sets button name
 
-                    FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>();
-                    string name = obj.shortName;
-                    file.fileName.text = name;
+    //                 FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>();
+    //                 string name = obj.shortName;
+    //                 file.fileName.text = name;
 
-                    if(obj.iso_start != null && obj.iso_end != null){
-                        string iso_start = obj.iso_start.Substring(0, 10);
-                        string iso_end = obj.iso_end.Substring(0, 10);
-                        string date = iso_start + " - " + iso_end; 
-                        file.secondRowInfo.text = date;
-                    }
-                    else {
-                        file.secondRowInfo.text = " ";
-                    }
-                    //file.RefreshMetadata();
+    //                 if(obj.iso_start != null && obj.iso_end != null){
+    //                     string iso_start = obj.iso_start.Substring(0, 10);
+    //                     string iso_end = obj.iso_end.Substring(0, 10);
+    //                     string date = iso_start + " - " + iso_end; 
+    //                     file.secondRowInfo.text = date;
+    //                 }
+    //                 else {
+    //                     file.secondRowInfo.text = " ";
+    //                 }
+    //                 //file.RefreshMetadata();
 
-                    newFileObj.SetActive(true);
-                    position++;
-                }
-            }
-            else{
-                Debug.Log("VR user files");
+    //                 newFileObj.SetActive(true);
+    //                 position++;
+    //             }
+    //         }
+    //         else{
+    //             Debug.Log("VR user files");
                 
-                int endCount = DataLoader.instance.dataFiles.Count;
-                for (int fileCount = page * numSlots; fileCount < endCount; fileCount++) {
-                    //Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
-                    if (DataLoader.instance.dataFiles[fileCount].fileName.Contains(filter)) {
-                        //Debug.Log("Filtered" + DataLoader.instance.dataFiles[fileCount].fileName);
-                        Debug.Log("FC: " + filesContainer.name);
-                        GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
-                        FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>(); // this line 
+    //             int endCount = DataLoader.instance.dataFiles.Count;
+    //             for (int fileCount = page * numSlots; fileCount < endCount; fileCount++) {
+    //                 //Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
+    //                 if (DataLoader.instance.dataFiles[fileCount].fileName.Contains(filter)) {
+    //                     //Debug.Log("Filtered" + DataLoader.instance.dataFiles[fileCount].fileName);
+    //                     Debug.Log("FC: " + filesContainer.name);
+    //                     GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
+    //                     FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>(); // this line 
 
-                        file.file = DataLoader.instance.dataFiles[fileCount];
-                        file.RefreshMetadata();
-                        newFileObj.name = DataLoader.instance.dataFiles[fileCount].runtimeName;
-                        newFileObj.SetActive(true);
-                        position++;
-                    }
-                }
-            }
-        }
-    }
+    //                     file.file = DataLoader.instance.dataFiles[fileCount];
+    //                     file.RefreshMetadata();
+    //                     newFileObj.name = DataLoader.instance.dataFiles[fileCount].runtimeName;
+    //                     newFileObj.SetActive(true);
+    //                     position++;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     public void Refresh(string filter) {
 
@@ -270,25 +283,6 @@ public class FileLoad2DMenu : MonoBehaviour {
         } else {
             Debug.Log("No slider found, defaulting to user files");
             UserFiles(filter);
-            // maybe i want to do this only when we've failed to find
-            // *both* sliders?
-        }
-
-        Slider FilesSliderVR = GameObject.Find("FilesSliderVR")?.GetComponent<Slider>();
-        if(FilesSliderVR != null){
-        //if(filesContainer.name == "ContentVR"){
-            Debug.Log("VR File Container: " + filesContainer.name);
-            if (FilesSliderVR.value == 0){ // generated SDAP files
-                Debug.Log("VR SDAP files");
-                SDAPFiles();
-            }
-       
-            else { 
-                Debug.Log("VR User files");
-                UserFiles(filter);
-            }
-        } else {
-            Debug.Log("No VR slider found");
         }
     }
 

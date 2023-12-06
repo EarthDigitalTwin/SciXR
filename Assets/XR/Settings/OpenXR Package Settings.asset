@@ -719,5 +719,5 @@ MonoBehaviour:
     enabled: 1
   - visibleName: Quest Pro
     manifestName: cambria
-    enabled: 0
-  forceRemoveInternetPermission: 1
+    enabled: 1
+  forceRemoveInternetPermission: 0

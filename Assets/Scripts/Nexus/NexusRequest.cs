@@ -7,34 +7,44 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using UnityEngine.Networking;
+using System.Collections;
 
-public class NexusRequest
+
+public class NexusRequest : MonoBehaviour
 {
 
-    public static List<NexusObject> PerformRequest()
+    public static IEnumerator PerformRequest(Action<List<NexusObject>> callback) 
     {
-        string aqBaseUrl = "https://ideas-digitaltwin.jpl.nasa.gov/nexus/"; 
+        string aqBaseUrl = "https://ideas-digitaltwin.jpl.nasa.gov/nexus";
         string apiUrl = $"{aqBaseUrl}/list";
 
-        using (HttpClient client = new HttpClient())
-        {
-            HttpResponseMessage response = client.GetAsync(apiUrl).Result;
-            response.EnsureSuccessStatusCode();
+        Debug.Log("Performing request to " + apiUrl);
+        UnityWebRequest www = UnityWebRequest.Get(apiUrl);
+        yield return www.SendWebRequest();
 
-            string responseBody = response.Content.ReadAsStringAsync().Result;
+        if (www.result != UnityWebRequest.Result.Success)
+        {
+            Debug.Log("UnityWebRequest failed:");
+            Debug.Log(www.error);
+        }
+        else
+        {
+            Debug.Log("UnityWebRequest succeeded:");
+            string responseBody = www.downloadHandler.text;
 
             // Deserialize the JSON response into objects
             NexusObject[] NexusObjects = JsonConvert.DeserializeObject<NexusObject[]>(responseBody);
             List<NexusObject> NexusList = new List<NexusObject>(NexusObjects);
 
             // Print the parsed objects
-            // foreach (NexusObject obj in NexusObjects)
-            // {
-            //     string shortName = $"Short Name: {obj.shortName}\n";
-            //     Console.WriteLine(shortName);
-            // }
+            foreach (NexusObject obj in NexusObjects)
+            {
+                string shortName = $"Short Name: {obj.shortName}\n";
+                Debug.Log(shortName);
+            }
 
-            return NexusList;
+            callback(NexusList);
         }
     }
 }
@@ -57,25 +67,25 @@ public class NexusRequest
     //     string aqBaseUrl = "https://ideas-digitaltwin.jpl.nasa.gov/nexus/";
     //     string apiUrl = $"{aqBaseUrl}/list";
 
-    //     using (HttpClient client = new HttpClient())
-    //     {
-    //         HttpResponseMessage response = client.GetAsync(apiUrl);
-    //         response.EnsureSuccessStatusCode();
+//     using (HttpClient client = new HttpClient())
+//     {
+//         HttpResponseMessage response = client.GetAsync(apiUrl);
+//         response.EnsureSuccessStatusCode();
 
-    //         string responseBody = response.Content.ReadAsStringAsync();
+//         string responseBody = response.Content.ReadAsStringAsync();
 
-    //         // Deserialize the JSON response into objects
-    //         NexusObject[] NexusObjects = JsonConvert.DeserializeObject<NexusObject[]>(responseBody);
+//         // Deserialize the JSON response into objects
+//         NexusObject[] NexusObjects = JsonConvert.DeserializeObject<NexusObject[]>(responseBody);
 
-    //         // Print the parsed objects
-    //         foreach (NexusObject obj in NexusObjects)
-    //         {
-    //             string shortName = $"Short Name: {obj.shortName}\n";
-    //             Debug.Log(shortName);
-    //         }
-    //         return NexusObjects.ToList();
-    //     }
-    // }
+//         // Print the parsed objects
+//         foreach (NexusObject obj in NexusObjects)
+//         {
+//             string shortName = $"Short Name: {obj.shortName}\n";
+//             Debug.Log(shortName);
+//         }
+//         return NexusObjects.ToList();
+//     }
+// }
 
 // using System;
 // using System.Collections;
@@ -106,7 +116,7 @@ public class NexusRequest
 //         if (response.IsSuccessful)
 //         {
 //             string responseBody = response.Content;
-            
+
 //             // Deserialize the JSON response into objects
 //             NexusObject[] dataObjects = JsonConvert.DeserializeObject<NexusObject[]>(responseBody);
 
