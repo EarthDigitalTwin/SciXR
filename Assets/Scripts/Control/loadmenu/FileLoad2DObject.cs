@@ -22,13 +22,10 @@ public class FileLoad2DObject : MonoBehaviour {
 
     FileLoad2DMenu menu;
 
-    FileLoad2DMenu vrMenu;
 
     private void Start() {
         menu = GetComponentInParent<FileLoad2DMenu>();
-        vrMenu = GetComponentInParent<FileLoad2DMenu>();
         Debug.Log("menutest: " + menu);
-        Debug.Log("vrmenutest: " + vrMenu);
     }
 
     public void FadeIn() {
@@ -92,15 +89,6 @@ public class FileLoad2DObject : MonoBehaviour {
         //metadataValues.text = metadataValuesString;
         
     }
-    
-    public void LoadUserInputMenu(){
-            Debug.Log("LoadUserInputMenu called");
-
-            FileLoad2DMenu[] menus = Resources.FindObjectsOfTypeAll<FileLoad2DMenu>();
-            FileLoad2DMenu userInputVR = menus[2]; //user input 2
-            userInputVR.EnableUserInputMenu();
-    }
-
     
     public void LoadData(bool autoPosition = true) {
         Debug.Log("LoadData called");
@@ -167,18 +155,23 @@ public class FileLoad2DObject : MonoBehaviour {
                 // set dataset text
                 if (button != null)
                 {
+                    // this is such a janky way of passing the dataset name to the user input menu lol
+
                     // if button clicked enable user input menu 
                     Debug.Log("Load data loading user input menu");
-                    LoadUserInputMenu(); // menu.EnableUserInputMenu();//LoadUserInputMenu(); // instantiate a new menu with user options
+                    menu.EnableUserInputMenu();  // activate SDAP user options menu
 
                     // fill in dataset text with dataset that was clicked on 
                     // Access the text component of the button
                     Text bText = button.GetComponentInChildren<Text>();
-                    string textValue = bText.text; // get dataset name
+                    Debug.Log("In LoadData btext:" + bText);
+                    string datasetName = bText.text; // get dataset name
+                    Debug.Log("In LoadData dataset name: " + datasetName);
 
-                    Button datasetButton = GameObject.Find("DatasetButton").GetComponent<Button>(); // find button text ui
-                    Text buttonText = datasetButton.GetComponentInChildren<Text>(); // extract text
-                    buttonText.text = textValue; // set text 
+                    TMP_Text datasetText = GameObject.Find("SDAPUserInputCanvas/SDAPDatasetTitle").GetComponent<TMP_Text>(); // find dataset label
+                    Debug.Log("In LoadData dataset text: " + datasetText);
+                    datasetText.text = datasetName; // set text 
+
                 }
             }
 
@@ -188,58 +181,6 @@ public class FileLoad2DObject : MonoBehaviour {
             }
         }
 
-        if(parentName == "ContentVR"){
-            Debug.Log("CONTENTVR");
-
-            Vector3 position = Vector3.zero;
-            Vector3 eulerAngles = Vector3.zero;
-            position = transform.position + transform.forward * 0.4f;
-            eulerAngles = Quaternion.LookRotation(position - transform.position).eulerAngles;
-            eulerAngles.x = 0;
-            eulerAngles.z = 0;
-
-            Slider userFilesSliderVR = GameObject.Find("FilesSliderVR")?.GetComponent<Slider>();
-            if (userFilesSliderVR?.value == 0){  //SDAP 
-
-                // Retrieve the clicked button
-                GameObject clickedButton = EventSystem.current.currentSelectedGameObject;
-                Button button = clickedButton.GetComponent<Button>();
-
-                // set dataset text
-                if (button != null)
-                {
-                    // fill in dataset button with dataset chosen (VR UserInputMenu)
-                    Button test = vrMenu.GetComponentInParent<Button>();
-                    Text bText = button.GetComponentInChildren<Text>();
-                    string textValue = bText.text; // get dataset name
-
-                    Button vrMenuButton = vrMenu.GetComponentInChildren<Button>();
-                    Text vrMenuText = vrMenuButton.GetComponentInChildren<Text>(); // extract text
-                    
-                    vrMenuText.text = textValue; // set text 
-
-                    FileLoad2DMenu VRUserMenu = GameObject.Find("UserInputVR").GetComponent<FileLoad2DMenu>();
-
-                    //Do
-                    // - disable vrMenu
-                    Debug.Log("t1: " + vrMenu);
-                    vrMenu.BeginDisable();
-
-                    // - enable userInputMenu
-                    Debug.Log("t2: " + VRUserMenu);
-                    VRUserMenu.EnableUserInputMenu();
-
-                    // CanvasGroup vrMenuCanvas = VRUserMenu.GetComponent<CanvasGroup>();
-                    // LeanTween.alphaCanvas(vrMenuCanvas, 1, 0.41f);
-                }
-            }
-
-            else { // user input file 
-                Debug.Log("LoadData User Files called");
-                DataLoader.instance.CreateDataObject(file, position, eulerAngles);
-            }
-        }
-        
     }
 
     public void HandlePointerEnter(BaseEventData data) {

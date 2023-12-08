@@ -5,7 +5,8 @@ using UnityEngine.UI;
 using System.Linq;
 using Dropdown = TMPro.TMP_Dropdown;
 using TMPro;
-using UI.Dates;
+using System;
+using System.Globalization;
 using System.IO;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
@@ -15,14 +16,13 @@ public class FileLoad2DMenu : MonoBehaviour {
 
     public GameObject fileObjectPrefab;
     public GameObject filesContainer;
-    public FileLoad2DMenu userInput;
-    public FileLoad2DMenu userInputVR;
+    public GameObject userInputCanvas;
+
 
     public int page = 0;
     public string sortBy = "Last Modified";
 
     CanvasGroup menuCanvas;
-    //FileLoad2DMenu userInput;
 
     public void OnEnable() {
         Debug.Log("on enable!");
@@ -52,13 +52,9 @@ public class FileLoad2DMenu : MonoBehaviour {
     }
 
     public void EnableUserInputMenu(){
-        menuCanvas = GetComponent<CanvasGroup>();
-        Debug.Log("enable user input menu: " + menuCanvas);
+        Debug.Log("enable user input menu: " + userInputCanvas);
 
-        menuCanvas.alpha = 0; // fully opaque //new originally 0
-        LeanTween.alphaCanvas(menuCanvas, 1, 0.4f);
-        menuCanvas.gameObject.SetActive(true);
-        //LeanTween.alphaCanvas(canvas, 0, 0.41f).setOnComplete(() => { gameObject.SetActive(false); }); ;
+        userInputCanvas.gameObject.SetActive(true);
     }
 
     public void DisableUserMenu(){
@@ -73,6 +69,7 @@ public class FileLoad2DMenu : MonoBehaviour {
                 fileObject.GetComponent<FileLoad2DObject>().BeginDisable(0.4f);
             }
         }
+        userInputCanvas.gameObject.SetActive(false);  // disable user input menu
     }
 
     public void EnableFileObjects() {
@@ -346,14 +343,9 @@ public class FileLoad2DMenu : MonoBehaviour {
         // GameObject userInputObject = GameObject.FindWithTag("SDAPInput");
         // userInputObject.SetActive(false);
 
-        // DO: Determine which window is calling (Menu or menuVR)
-        // // THEN: Disable the correct Menu
-        if(userInput){
-           userInput.DisableUserMenu();
+        if(userInputCanvas){
+           //userInput.DisableUserMenu();
         }
-
-        // if(userInputVR)
-        //     userInputVR.DisableUserMenu();
 
         // make data instance
         SerialFile sdapFile = null;
@@ -382,35 +374,48 @@ public class FileLoad2DMenu : MonoBehaviour {
 
     public void handleInput()
     {
-        Debug.Log("in handle input");
-        DatePicker_DateRange dateField = GameObject.Find("DatePicker")?.GetComponent<DatePicker_DateRange>();
-        UI.Dates.SerializableDate startDate = dateField.FromDate;
-        UI.Dates.SerializableDate endDate = dateField.ToDate;
-
-        string startTimeRaw = startDate.ToString(); //.Substring(0, 9); // Convert SerializableDate to string
-        string endTimeRaw = endDate.ToString(); //.Substring(0, 9); // Convert SerializableDate to string
-
-        string[] startTimeSplit = startTimeRaw.Split('/');
-        string[] endTimeSplit = endTimeRaw.Split('/');
-
-        string startTime = startTimeSplit[2].Substring(0, 4) + "-" + startTimeSplit[0].PadLeft(2, '0') + "-" + startTimeSplit[1].PadLeft(2, '0');
-        string endTime = endTimeSplit[2].Substring(0, 4) + "-" + endTimeSplit[0].PadLeft(2, '0') + "-" + endTimeSplit[1].PadLeft(2, '0');
+        Debug.Log("In handle input");
+        InputField variableField = GameObject.Find("Variable")?.GetComponent<InputField>();
+        InputField units = GameObject.Find("Units")?.GetComponent<InputField>();
+        InputField identifier = GameObject.Find("Identifier")?.GetComponent<InputField>();
 
         InputField Box = GameObject.Find("BBox")?.GetComponent<InputField>();
         // Retrieve the value from the input field
         string[] bBox = Box.text.Split(',');
 
+        // Handle date range selection
+        // TODO This should really be handled by a dedicated datepicker component. But the one
+        // currently included in this project is broken, so I'm doing it brittlely here.
+        // We expect the date range to be in the format "yyyy-MM-dd" (e.g. "2023-12-25")
+        InputField startDateField = GameObject.Find("SDAPDateFrom")?.GetComponent<InputField>();
+        InputField endDateField = GameObject.Find("SDAPDateTo")?.GetComponent<InputField>();
+        string startTimeRaw = startDateField.text;
+        string endTimeRaw = endDateField.text;
 
-        InputField variableField = GameObject.Find("Variable")?.GetComponent<InputField>();
-        InputField units = GameObject.Find("Units")?.GetComponent<InputField>();
-        InputField identifier = GameObject.Find("Identifier")?.GetComponent<InputField>();
+        // Ensure that the date range is valid
+        DateTime startDate, endDate;
+        string dateFormat = "yyyy-MM-dd";
+
+        bool isStartDateValid = DateTime.TryParseExact(startTimeRaw, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out startDate);
+        bool isEndDateValid = DateTime.TryParseExact(endTimeRaw, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out endDate);
+
+        if (!isStartDateValid || !isEndDateValid)
+        {
+            Debug.LogError("Invalid date format. Dates must be in the format: " + dateFormat);
+            return;
+        }
+
+        if (startDate > endDate)
+        {
+            Debug.LogError("Invalid date range: " + startTimeRaw + " - " + endTimeRaw);
+            return;
+        }
 
         int interpolation = 1;
-        string labelTime = startTime;
+        string labelTime = startTimeRaw;
         string sdap_url = "https://ideas-digitaltwin.jpl.nasa.gov/nexus";
 
-        Button datasetButton = GameObject.Find("DatasetButton").GetComponent<Button>(); // find button text ui
-        TMP_Text datasetField = datasetButton.GetComponentInChildren<TMP_Text>(); // extract text
+        TMP_Text datasetField = GameObject.Find("SDAPDatasetTitle").GetComponent<TMP_Text>(); // find dataset label
 
         //format bbox
         //TODO fix bounding box 
@@ -424,11 +429,12 @@ public class FileLoad2DMenu : MonoBehaviour {
                         + "description: \"" + "" + "\"\n"
                         + "instrument: " + "\"" + "\"\n" // -81, -65, 34, 50
                         + "bbox: {" + "'min_lon': " + bBox[0] + ", 'max_lon': " + bBox[1] + ", 'min_lat': " + bBox[2] + ", 'max_lat': " + bBox[3] + "}\n"
-                        + "start_time: \"" + startTime + "\"\n"
-                        + "end_time: \"" + endTime + "\"\n"
+                        + "start_time: \"" + startTimeRaw + "\"\n"
+                        + "end_time: \"" + endTimeRaw + "\"\n"
                         + "label_time: \"" + labelTime + "\"\n"
                         + "interpolation: " + interpolation;
 
+        Debug.Log("In handleInput, done parsing form. Content: " + content);
         File.WriteAllText(filePath, content);
 
         // generate data file
