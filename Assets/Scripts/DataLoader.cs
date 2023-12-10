@@ -126,7 +126,7 @@ public class DataLoader : MonoBehaviour {
         }
     }
 
-    IEnumerator LoadFileAndroid(string path, Action<string> callback) {
+    public static IEnumerator LoadFileAndroid(string path, Action<string> callback) {
         Debug.Log("Loading file from Android with web request: " + path);
         using (UnityWebRequest www = UnityWebRequest.Get(path))
         {

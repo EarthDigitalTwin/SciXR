@@ -168,85 +168,6 @@ public class FileLoad2DMenu : MonoBehaviour {
         }
     }
 
-    // public void RefreshVR(string filter){
-    //     int position = 0;
-    //     int numSlots = 10;
-    //     GameObject filesContainer = GameObject.Find("ContentVR");
-    //     Debug.Log("fcn" + filesContainer);
-
-    //     foreach (Transform child in filesContainer.transform) {
-    //         if (child != fileObjectPrefab.transform)
-    //             Destroy(child.gameObject);
-    //     }
-
-    //     if (DataLoader.instance?.dataFiles == null)
-    //         return;
-
-    //     int filteredFiles = 0;
-    //     foreach (SerialFile dataFile in DataLoader.instance.dataFiles) {
-    //         if (dataFile.fileName.Contains(filter)) {
-    //             filteredFiles++;
-    //         }
-    //     }
-
-    //     Slider FilesSliderVR = GameObject.Find("FilesSliderVR")?.GetComponent<Slider>();
-    //     Debug.Log("RefreshVR " + FilesSliderVR);
-    //     if(FilesSliderVR != null){
-    //         if(FilesSliderVR.value == 0){
-    //             Debug.Log("VR SDAP files");
-
-    //             // SDAP FILES
-    //             List<NexusObject> NexusObjects = NexusRequest.PerformRequest();
-
-    //             for (int fileCount = 0; fileCount < NexusObjects.Count; fileCount++) {
-    //                 //Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
-    //                 NexusObject obj = NexusObjects[fileCount];
-    //                 //if (obj.shortName.Contains(filter)) {
-    //                 GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
-    //                 newFileObj.name = obj.shortName; // sets button name
-
-    //                 FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>();
-    //                 string name = obj.shortName;
-    //                 file.fileName.text = name;
-
-    //                 if(obj.iso_start != null && obj.iso_end != null){
-    //                     string iso_start = obj.iso_start.Substring(0, 10);
-    //                     string iso_end = obj.iso_end.Substring(0, 10);
-    //                     string date = iso_start + " - " + iso_end; 
-    //                     file.secondRowInfo.text = date;
-    //                 }
-    //                 else {
-    //                     file.secondRowInfo.text = " ";
-    //                 }
-    //                 //file.RefreshMetadata();
-
-    //                 newFileObj.SetActive(true);
-    //                 position++;
-    //             }
-    //         }
-    //         else{
-    //             Debug.Log("VR user files");
-                
-    //             int endCount = DataLoader.instance.dataFiles.Count;
-    //             for (int fileCount = page * numSlots; fileCount < endCount; fileCount++) {
-    //                 //Debug.Log(DataLoader.instance.dataFiles[fileCount].fileName);
-    //                 if (DataLoader.instance.dataFiles[fileCount].fileName.Contains(filter)) {
-    //                     //Debug.Log("Filtered" + DataLoader.instance.dataFiles[fileCount].fileName);
-    //                     Debug.Log("FC: " + filesContainer.name);
-    //                     GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
-    //                     FileLoad2DObject file = newFileObj.GetComponent<FileLoad2DObject>(); // this line 
-
-    //                     file.file = DataLoader.instance.dataFiles[fileCount];
-    //                     file.RefreshMetadata();
-    //                     newFileObj.name = DataLoader.instance.dataFiles[fileCount].runtimeName;
-    //                     newFileObj.SetActive(true);
-    //                     position++;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
     public void Refresh(string filter) {
 
         Debug.Log("File Container: " + filesContainer.name);
@@ -338,22 +259,25 @@ public class FileLoad2DMenu : MonoBehaviour {
             eulerAngles.x = 0;
             eulerAngles.z = 0;
         }
-        
-        // hide user input
-        // GameObject userInputObject = GameObject.FindWithTag("SDAPInput");
-        // userInputObject.SetActive(false);
 
-        if(userInputCanvas){
-           //userInput.DisableUserMenu();
-        }
+        // hide user input
+        userInputCanvas.SetActive(false);
 
         // make data instance
         SerialFile sdapFile = null;
         try
         {   
             Debug.Log("entered try");
-            sdapFile = PLYReader.MetadataFromPath("Assets/Scripts/Control/processing/" + identifier + ".ply");
-            DataLoader.instance.CreateDataObject(sdapFile, position, eulerAngles);
+            if (Application.platform == RuntimePlatform.Android) {
+                // android stuff
+                string path = "";  // TODO get path to file
+                DataLoader.LoadFileAndroid(path, (string fileContents) => {
+                    // something here
+                });
+            } else {
+                sdapFile = PLYReader.MetadataFromPath("Assets/Scripts/Control/processing/" + identifier + ".ply");
+                DataLoader.instance.CreateDataObject(sdapFile, position, eulerAngles);
+            }
         }
         catch (System.Exception e) // this doesnt loop properly should just reset everything 
         {
@@ -458,7 +382,6 @@ public class FileLoad2DMenu : MonoBehaviour {
 
         //format bbox
         //TODO fix bounding box 
-        string filePath = "Assets/Scripts/Control/processing/test_config.yaml";
         string content = "sdap_url: \"" + sdap_url 
                         + "\"\n" + "variables: \n  -\"" 
                         + variable + "\"\n" 
@@ -474,10 +397,18 @@ public class FileLoad2DMenu : MonoBehaviour {
                         + "interpolation: " + interpolation;
 
         Debug.Log("In handleInput, done parsing form. Content: " + content);
-        File.WriteAllText(filePath, content);
 
         // generate data file
-        CallShellScript();
+        if (Application.platform == RuntimePlatform.Android) {
+            // android stuff
+            // TODO call the C# version of sdap_xr.py and pass it the config file
+        } else {
+            // generate data file
+            string filePath = "Assets/Scripts/Control/processing/test_config.yaml";
+            File.WriteAllText(filePath, content);
+            Debug.Log("In handleInput, calling shell script");
+            CallShellScript();
+        }
         generateSDAPInstance(identifier);
     }
 
