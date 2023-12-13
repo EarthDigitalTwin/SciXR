@@ -178,7 +178,7 @@ public class FileLoadObject : MonoBehaviour{
 
         if (autoPosition) {
             float distance = 1;
-            Transform cameraTransform = DesktopInterface.instance.transform;
+            Transform cameraTransform = GameObject.Find("Main Camera").transform;
             Vector3 headsetForward = new Vector3(cameraTransform.forward.x, 0, cameraTransform.forward.z);
             headsetForward.Normalize();
             position = cameraTransform.position + headsetForward * distance;

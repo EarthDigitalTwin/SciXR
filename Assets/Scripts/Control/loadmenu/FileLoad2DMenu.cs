@@ -243,7 +243,8 @@ public class FileLoad2DMenu : MonoBehaviour {
 
         if (autoPosition) {
             float distance = 1;
-            Transform cameraTransform = DesktopInterface.instance.transform;
+            Debug.Log("finding camera transform");
+            Transform cameraTransform = GameObject.Find("Main Camera").transform;
             Vector3 headsetForward = new Vector3(cameraTransform.forward.x, 0, cameraTransform.forward.z);
             headsetForward.Normalize();
             position = cameraTransform.position + headsetForward * distance;
@@ -261,23 +262,27 @@ public class FileLoad2DMenu : MonoBehaviour {
         }
 
         // hide user input
-        userInputCanvas.SetActive(false);
+        if (userInputCanvas) {
+            userInputCanvas.SetActive(false);
+        }
 
         // make data instance
         SerialFile sdapFile = null;
         try
         {   
             Debug.Log("entered try");
-            if (Application.platform == RuntimePlatform.Android) {
-                // android stuff
-                string path = "";  // TODO get path to file
-                DataLoader.LoadFileAndroid(path, (string fileContents) => {
-                    // something here
-                });
-            } else {
-                sdapFile = PLYReader.MetadataFromPath("Assets/Scripts/Control/processing/" + identifier + ".ply");
-                DataLoader.instance.CreateDataObject(sdapFile, position, eulerAngles);
+            // for android, we stored the file here
+            string path = Path.Combine(Application.persistentDataPath, identifier + ".ply");
+            if (Application.platform != RuntimePlatform.Android) {
+                // non-android
+                path = "Assets/Scripts/Control/processing/" + identifier + ".ply";
             }
+            // Because we don't have to access persistentDataPath files through the WebRequest
+            // API, we can just use normal file i/o to read SDAP files.
+            Debug.Log("Reading SDAP file from path: " + path);
+            sdapFile = PLYReader.MetadataFromPath(path);
+            Debug.Log("Successfully read file, calling CreateDataObject...");
+            DataLoader.instance.CreateDataObject(sdapFile, position, eulerAngles);
         }
         catch (System.Exception e) // this doesnt loop properly should just reset everything 
         {
@@ -298,7 +303,6 @@ public class FileLoad2DMenu : MonoBehaviour {
 
     public void handleInput()
     {
-        Debug.Log("In handle input");
         // TODO The below code is for using TMP InputFields. They don't work in XR. So for now
         // we have to use Dropdowns, because they work. Ideally we would use dedicated form components
         // for all of this.
@@ -379,10 +383,44 @@ public class FileLoad2DMenu : MonoBehaviour {
         string labelTime = startTimeRaw;
         string sdap_url = "https://ideas-digitaltwin.jpl.nasa.gov/nexus";
 
+        Debug.Log("In handleInput, done parsing form. ");
 
-        //format bbox
-        //TODO fix bounding box 
-        string content = "sdap_url: \"" + sdap_url 
+        // generate data file
+        if (Application.platform == RuntimePlatform.Android) {
+            // android stuff
+            SdapConfiguration config = new SdapConfiguration
+            {
+                SdapUrl = sdap_url,
+                Variables = new List<string> { variable },
+                Units = units,
+                Dataset = datasetField.text,
+                Identifier = identifier,
+                Description = "",
+                Instrument = "",
+                Bbox = new BoundingBox {
+                    MinLon = double.Parse(minLon),
+                    MaxLon = double.Parse(maxLon),
+                    MinLat = double.Parse(minLat),
+                    MaxLat = double.Parse(maxLat)
+                },
+                StartTime = DateTime.ParseExact(startTimeRaw, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                EndTime = DateTime.ParseExact(endTimeRaw, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                LabelTime = DateTime.ParseExact(labelTime, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                Interpolation = interpolation
+            };
+            Debug.Log("In handleInput, calling sdapToPly.ProcessSdap...");
+            GameObject dummy = new GameObject();
+            SdapToPly sdapToPly = dummy.AddComponent<SdapToPly>();
+            sdapToPly.ProcessSdap(config, () => {
+                Debug.Log("In handleInput, calling generateSDAPInstance...");
+                // calling this as callback to make sure file is written
+                generateSDAPInstance(config.Identifier);
+                Destroy(dummy);
+            });
+        } else {
+            //format bbox
+            //TODO fix bounding box 
+            string content = "sdap_url: \"" + sdap_url 
                         + "\"\n" + "variables: \n  -\"" 
                         + variable + "\"\n" 
                         + "units: \"" + units + "\"\n" 
@@ -395,21 +433,13 @@ public class FileLoad2DMenu : MonoBehaviour {
                         + "end_time: \"" + endTimeRaw + "\"\n"
                         + "label_time: \"" + labelTime + "\"\n"
                         + "interpolation: " + interpolation;
-
-        Debug.Log("In handleInput, done parsing form. Content: " + content);
-
-        // generate data file
-        if (Application.platform == RuntimePlatform.Android) {
-            // android stuff
-            // TODO call the C# version of sdap_xr.py and pass it the config file
-        } else {
             // generate data file
             string filePath = "Assets/Scripts/Control/processing/test_config.yaml";
             File.WriteAllText(filePath, content);
             Debug.Log("In handleInput, calling shell script");
             CallShellScript();
+            generateSDAPInstance(identifier);
         }
-        generateSDAPInstance(identifier);
     }
 
     public void OnSortChange(int dropdownVal) {
@@ -449,6 +479,43 @@ public class FileLoad2DMenu : MonoBehaviour {
     {
         DataLoader.instance.dataFiles = DataLoader.instance.dataFiles.OrderBy(o => o.identifier).ToList();
         Refresh("sdap");
+    }
+
+    public void TestSdap()
+    {
+        Debug.Log("Test SDAP called");
+        // Testing. This uses values from sample_config.yaml
+        SdapConfiguration config = new SdapConfiguration
+        {
+            SdapUrl = "https://ideas-digitaltwin.jpl.nasa.gov/nexus",
+            Dataset = "TROPOMI_CO_global",
+            Variables = new List<string> { "CO" },
+            Units = "",
+            Identifier = "TROPOMI_CO_NE_USA",
+            Description = "TROPOMI Carbon Monoxide Northeast USA",
+            Instrument = "TROPOMI",
+            Bbox = new BoundingBox
+            {
+                MinLon = -81,
+                MaxLon = -65,
+                MinLat = -34,
+                MaxLat = 50
+            },
+            StartTime = DateTime.ParseExact("2023-06-07", "yyyy-MM-dd", CultureInfo.InvariantCulture),
+            EndTime = DateTime.ParseExact("2023-06-08", "yyyy-MM-dd", CultureInfo.InvariantCulture),
+            LabelTime = DateTime.ParseExact("2023-06-07", "yyyy-MM-dd", CultureInfo.InvariantCulture),
+            Interpolation = 5
+        };
+
+        GameObject dummy = new GameObject();
+        SdapToPly sdapToPly = dummy.AddComponent<SdapToPly>();
+        sdapToPly.ProcessSdap(config, () =>
+        {
+            Debug.Log("In handleInput, calling generateSDAPInstance...");
+            // calling this as callback to make sure file is written
+            generateSDAPInstance(config.Identifier);
+            Destroy(dummy);
+        });
     }
 
 }

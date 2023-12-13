@@ -93,29 +93,6 @@ public class FileLoad2DObject : MonoBehaviour {
     public void LoadData(bool autoPosition = true) {
         Debug.Log("LoadData called");
 
-        // metadata.gameObject.SetActive(false);
-        // Vector3 position = Vector3.zero;
-        // Vector3 eulerAngles = Vector3.zero;
-
-        // if (autoPosition) {
-        //     float distance = 1;
-        //     Transform cameraTransform = DesktopInterface.instance.transform;
-        //     Vector3 headsetForward = new Vector3(cameraTransform.forward.x, 0, cameraTransform.forward.z);
-        //     headsetForward.Normalize();
-        //     position = cameraTransform.position + headsetForward * distance;
-        //     position = new Vector3(position.x, 1, position.z);
-
-        //     Vector3 directionVector = position - cameraTransform.position;
-        //     directionVector.y = 0;
-        //     eulerAngles = Quaternion.LookRotation(directionVector).eulerAngles;
-        // }
-        // else {
-        //     position = transform.position + transform.forward * 0.4f;
-        //     eulerAngles = Quaternion.LookRotation(position - transform.position).eulerAngles;
-        //     eulerAngles.x = 0;
-        //     eulerAngles.z = 0;
-        // }
-
         string parentName = transform.parent.name;
         Debug.Log("xyz: " + parentName);
 
@@ -125,7 +102,7 @@ public class FileLoad2DObject : MonoBehaviour {
 
             if (autoPosition) {
                 float distance = 1;
-                Transform cameraTransform = DesktopInterface.instance.transform;
+                Transform cameraTransform = GameObject.Find("Main Camera").transform;
                 Vector3 headsetForward = new Vector3(cameraTransform.forward.x, 0, cameraTransform.forward.z);
                 headsetForward.Normalize();
                 position = cameraTransform.position + headsetForward * distance;

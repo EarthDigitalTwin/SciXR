@@ -246,13 +246,6 @@ public class DataLoader : MonoBehaviour {
 
         loadedData.Add(dataObject.gameObject);
 
-        //MenuHandVRControls vrControls = FindObjectOfType<MenuHandVRControls>();
-        //if (vrControls!= null && VRTK.VRTK_SDKManager.instance.loadedSetup != null) {
-        //    vrControls.LoadMenuCloseClick();
-        //    vrControls.CloseClick();
-        //}
-        DesktopInterface.instance.RefreshLoadedMeshesMenu();
-        DesktopInterface.instance.SetTarget(dataObject.GetComponentInChildren<MeshVRControls>().transform);
 
         // Fire off data reading task
         if (Application.platform != RuntimePlatform.Android) {
@@ -304,8 +297,15 @@ public class DataLoader : MonoBehaviour {
         }
 
 
-        if (Application.platform == RuntimePlatform.Android)
+        if (Application.platform == RuntimePlatform.Android 
+            && fileToLoad.fileName.EndsWith(".js")   // only implemented JS for now
+            && !fileToLoad.path.Contains(Application.persistentDataPath))  // only need to load from raw for files in StreamingAssets (so SDAP goes in the other branch)
         {
+            if (!fileToLoad.path.EndsWith(".js")) 
+            {
+                Debug.Log("LoadDataAsync Android with fileToLoad.fileName " + fileToLoad.fileName + " not ending with .js! We've only implemented JS loading for local files on Android. Exiting. \n (TODO: implement LoadFromRaw for other file types)");
+                return;
+            }
             Debug.Log("Detected Android platform and loading JS file with web request: " + fileToLoad.path);
             void readModelFromRaw(string rawData)
             {
@@ -331,7 +331,11 @@ public class DataLoader : MonoBehaviour {
             }
             processSerialData(serialData);
             // Send back to main thread
-            ThreadManager.instance.callbacks.Add(() => LoadDataCallback(dataObject, serialMesh));
+            if (Application.platform != RuntimePlatform.Android) {
+                ThreadManager.instance.callbacks.Add(() => LoadDataCallback(dataObject, serialMesh));
+            } else {
+                LoadDataCallback(dataObject, serialMesh);
+            }
         }
     }
 
@@ -448,13 +452,8 @@ public class DataLoader : MonoBehaviour {
 
     public void RemoveMesh(GameObject dataMesh) {
         loadedData.Remove(dataMesh);
-        DesktopInterface controls = DesktopInterface.instance;
-        if (controls.target == dataMesh) {
-            controls.target = null;
-
-        }
+        
         Destroy(dataMesh);
-        controls.RefreshLoadedMeshesMenu();
     }
     
 
