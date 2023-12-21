@@ -40,3 +40,14 @@ This software was developed using Unity 2022 and XRI. Here are some important no
 - For working on 3D Tiles and GLTF support — those plugins, developed by JPL, are just sitting in the Assets folder, not managed as a plugin. This will certainly cause problems.
 - There are plenty of UI rough edges and flat-out missing features. Rough edges include the fact that SDAP data appears only to be rendered in one eye, the variable names don't show up on the DataInstance reliably, etc. Missing features include the laser inspector, the slicer, stretching data, and satellite imagery.
 - The SDAP user interface needs to be improved.
+
+### Building and running
+I couldn't get the Player to reliably work, and the important testing work was primarily around UI (which benefits greatly from a physical device), so I always built the project and deployed it to a Quest Pro connected via USB. It is possible to use a simulator, although I didn't try it; it was simpler to just use a physical headset. 
+
+Here are the instructions for how to do the build:
+
+0. Follow the instructions [here](https://developer.oculus.com/documentation/unity/unity-gs-overview/) to set up your Unity environment to work with a Quest.
+1. Connect your Quest via a good USB-C cable and connect to Meta Quest Development Hub.
+2. In the Build Settings in Unity, in the Android tab, you should now see your Quest as a target. Configure this according to the instructions above.
+3. Make sure to uncheck the "Force remove internet permission" as noted above.
+4. Build — `Command + B` — and it should automatically copy the APK to your connected Quest over ADB and display a Unity window streaming Logcat. It's helpful to set a filter for Unity events, so you don't get all the Quest's device logs.
