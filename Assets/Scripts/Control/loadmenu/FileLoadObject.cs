@@ -8,7 +8,7 @@ using UnityEngine.UI;
 using Text = TMPro.TMP_Text;
 
 public class FileLoadObject : MonoBehaviour{
-    
+
     public SerialFile file;
     public float fadeTime = 0.4f;
 
@@ -32,6 +32,10 @@ public class FileLoadObject : MonoBehaviour{
     private void Start() {
         menu = GetComponentInParent<FileLoadMenu>();
     }
+
+    //void OnEnable() {
+
+    //}
 
     public void FadeIn() {
         // Fade in base
@@ -65,6 +69,10 @@ public class FileLoadObject : MonoBehaviour{
         
         // Fade out base
         LeanTween.alpha(fileBase.gameObject, 0, disableTime).setOnComplete(() => { gameObject.SetActive(false); });
+    }
+
+
+    private void OnDestroy() {
     }
 
     public void RefreshMetadata() {
@@ -139,55 +147,7 @@ public class FileLoadObject : MonoBehaviour{
         
     }
 
-    // VR pointer handling
-    /*
-    private void OnVRPointerEnter(object sender, DestinationMarkerEventArgs e) {
-        if (e.target == this.transform) {
-            OnPointerEnter(null);
-        }
-    }
 
-    private void OnVRPointerExit(object sender, DestinationMarkerEventArgs e) {
-        if (e.target == this.transform) {
-            OnPointerExit(null);
-        }
-    }
-    
-
-    bool isClicked = false;
-    bool frameClick = false;
-    private void OnVRPointerClick(object sender, DestinationMarkerEventArgs e) {
-        if(!isClicked && e.controllerReference.scriptAlias.GetComponent<VRTK_ControllerEvents>().triggerPressed) {
-            isClicked = true;
-            frameClick = true;
-        }
-        else if(isClicked && !e.controllerReference.scriptAlias.GetComponent<VRTK_ControllerEvents>().triggerPressed) {
-            isClicked = false;
-        }
-            
-        if (e.target == this.transform && frameClick) {
-            OnPointerClick(null);
-            frameClick = false;
-        }
-    }
-    */
-    #region Pointer Handling
-
-    // AR pointer handling
-    public void OnARPointerEnter()
-    {
-        OnPointerEnter(null);
-    }
-
-    public void OnARPointerExit()
-    {
-        OnPointerExit(null);
-    }
-
-    public void OnARPointerClick()
-    {
-        LoadData();
-    }
 
     // Screen space pointing handling 
     public void OnPointerEnter(PointerEventData eventData) {
@@ -211,8 +171,6 @@ public class FileLoadObject : MonoBehaviour{
         //}
     }
 
-    #endregion
-
     public void LoadData(bool autoPosition = true) {
         metadata.gameObject.SetActive(false);
         Vector3 position = Vector3.zero;
@@ -220,7 +178,7 @@ public class FileLoadObject : MonoBehaviour{
 
         if (autoPosition) {
             float distance = 1;
-            Transform cameraTransform = DesktopInterface.instance.transform;
+            Transform cameraTransform = GameObject.Find("Main Camera").transform;
             Vector3 headsetForward = new Vector3(cameraTransform.forward.x, 0, cameraTransform.forward.z);
             headsetForward.Normalize();
             position = cameraTransform.position + headsetForward * distance;
@@ -237,6 +195,6 @@ public class FileLoadObject : MonoBehaviour{
         }
         menu.BeginDisable();
         DataLoader.instance.CreateDataObject(file, position, eulerAnglers);
+        
     }
-    
 }

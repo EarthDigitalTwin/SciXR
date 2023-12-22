@@ -45,7 +45,7 @@ public class SerialMesh {
                 mesh.AddBlendShapeFrame("Frame " + frame, 100, meshData.blendShapes[frame], null, null);
             }
         }
-
+        
         return mesh;
     }
 

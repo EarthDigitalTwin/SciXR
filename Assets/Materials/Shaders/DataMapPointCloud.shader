@@ -4,13 +4,6 @@
 
 // PointCloudMeshColors Alpha
 
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
-
-// PointCloudMeshColors Alpha
-
-
 Shader "SciVR/DataMapPointCloud"
 {
 	Properties
@@ -34,7 +27,6 @@ Shader "SciVR/DataMapPointCloud"
 		_Max("Max(Scale)", Range(0,1)) = 1
 		[Toggle(INVERT)]
 		_Invert("Invert Colors", Float) = 0
-		_PointSize("Point Size", Range(0, 1)) = 0.5
 
 		[Toggle(ENABLE_LOG)]
 		_EnableLog("Enable Log", Float) = 0
@@ -97,8 +89,6 @@ Shader "SciVR/DataMapPointCloud"
 			float4 _ClipExtents;
 			float4x4 _ClipMatrix;
 
-			float _PointSize;
-
 
 			struct appdata
 			{
@@ -116,7 +106,6 @@ Shader "SciVR/DataMapPointCloud"
 				fixed4 color : COLOR;
 				float2 uv_MainTex : TEXCOORD0;
 				float3 clipPos : TEXCOORD2;
-				float size : PSIZE;
 				UNITY_VERTEX_OUTPUT_STEREO
 			};
 
@@ -134,7 +123,6 @@ Shader "SciVR/DataMapPointCloud"
 				o.uv_MainTex = TRANSFORM_TEX(lerp(v.uv1, v.uv, _AniLerp), _MainTex);
 				//o.wpos = mul(unity_ObjectToWorld, v.vertex);
 				o.clipPos = mul(_ClipMatrix, mul(unity_ObjectToWorld, v.vertex));
-				o.size = _PointSize;
 				return o;
 			}
 

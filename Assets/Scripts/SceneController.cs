@@ -15,14 +15,11 @@ public class SceneController : MonoBehaviour {
 
     void Awake() {
         FindObjectOfType<DataObject>()?.gameObject.SetActive(false);
+        XRSettings.enabled = false;
+        XRSettings.enabled = true;
         if (disableVR) {
             XRSettings.enabled = false;
             XRSettings.LoadDeviceByName("None");
-        }
-        else
-        {
-            XRSettings.enabled = false;
-            XRSettings.enabled = true;
         }
     }
 

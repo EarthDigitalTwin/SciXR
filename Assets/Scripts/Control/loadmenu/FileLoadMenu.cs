@@ -16,6 +16,8 @@ public class FileLoadMenu : MonoBehaviour {
     public int page = 0;
     public string sortBy = "Last Modified";
 
+    public GameObject dropZoneContainer;
+
     private List<GameObject> loadedPreviews = new List<GameObject>();
 
     void Start () {
@@ -54,6 +56,9 @@ public class FileLoadMenu : MonoBehaviour {
     
     public void EnableFileObjects() {
         float delay = 0.1f;
+        foreach (Transform child in dropZoneContainer.transform) {
+            //child.GetComponent<VRTK_SnapDropZone>().ForceUnsnap();
+        }
 
         foreach (Transform fileObject in filesContainer.transform) {
             if (fileObject.name != "FileObjectPrefab") {
@@ -70,7 +75,11 @@ public class FileLoadMenu : MonoBehaviour {
 
     public void Refresh() {
         int position = 0;
-        int numSlots = 5;
+        int numSlots = dropZoneContainer.transform.childCount;
+
+        foreach(Transform child in dropZoneContainer.transform) {
+            //child.GetComponent<VRTK_SnapDropZone>().ForceUnsnap();
+        }
 
         foreach (Transform child in filesContainer.transform) {
             if (child.name != "FileObjectPrefab")
@@ -84,9 +93,12 @@ public class FileLoadMenu : MonoBehaviour {
             GameObject newFileObj = Instantiate(fileObjectPrefab, filesContainer.transform);
             FileLoadObject file = newFileObj.GetComponent<FileLoadObject>();
             file.file = DataLoader.instance.dataFiles[fileCount];
+            //file.assignedDropzone = dropZoneContainer.transform.GetChild(position).GetComponent<VRTK_SnapDropZone>();
             file.RefreshMetadata();
             newFileObj.name = DataLoader.instance.dataFiles[fileCount].runtimeName;
+            newFileObj.transform.position = dropZoneContainer.transform.GetChild(position).position;
             newFileObj.SetActive(true);
+            //file.assignedDropzone.ForceSnap(newFileObj);
             position++;
         }
     }

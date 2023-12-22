@@ -14,7 +14,8 @@ TagManager:
   - FileLoad
   - GlobeButtonDisable
   - DockableAnimationMenu
-  - VRHeadset
+  - SDAPInput
+  - Units
   layers:
   - Default
   - TransparentFX
@@ -47,7 +48,7 @@ TagManager:
   - 
   - 
   - 
-  - Spatial Awareness
+  - 
   m_SortingLayers:
   - name: Default
     uniqueID: 0

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class MenuHandVRControls : MonoBehaviour {
-    /*
     public GameObject loadMenu;
     public CanvasGroup screenshotMenu;
     public GameObject slicer;
@@ -15,37 +14,21 @@ public class MenuHandVRControls : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        //Button action assignments
-        GetComponent<VRTK_ControllerEvents>().ButtonTwoPressed += new ControllerInteractionEventHandler(TopButtonPressed);
-
-        //Init 
-        //mainMenuGroup = GetComponentInChildren<CanvasGroup>();
-        //Transform headset = VRTK_DeviceFinder.HeadsetCamera();
-        //if(headset != null)
-        //{
-        //    Canvas[] canvases = FindObjectsOfType<Canvas>();
-        //    foreach (Canvas canvas in canvases) {
-        //        if (canvas.renderMode == RenderMode.WorldSpace) {
-        //            canvas.worldCamera = headset.GetComponent<Camera>();
-        //        }
-        //    }
-        //}
-    }
-
-    void TopButtonPressed(object sender, ControllerInteractionEventArgs e) {
-        CloseClick();
     }
 
     //Main Menu Button Callbacks
 
     public void LoadModelClick() {
+        Debug.Log("Load Model Clicked");
         ScreenshotCloseClick();
         if(!loadMenu.gameObject.activeSelf) {
+            Debug.Log("Load Menu not active, setting it active");
             loadMenu.gameObject.SetActive(true);
             //LeanTween.alphaCanvas(loadMenu, 1, 0.2f);
             //LeanTween.moveLocalX(loadMenu, 434, 0.2f).setEaseOutCubic();
         }
         else {
+            Debug.Log("Load menu already active, setting it inactive");
             loadMenu.GetComponent<FileLoadMenu>()?.BeginDisable();
             loadMenu.GetComponent<FileLoad2DMenu>()?.BeginDisable();
             //LeanTween.alphaCanvas(loadMenu, 0, 0.2f);
@@ -54,6 +37,7 @@ public class MenuHandVRControls : MonoBehaviour {
     }
 
     public void SlicerToggleClick() {
+        Debug.Log("Slicer Toggle clicked");
         if(!slicer.activeSelf) {
             slicer.SetActive(true);
             slicer.transform.position = GetFrontOfCamera();
@@ -64,7 +48,7 @@ public class MenuHandVRControls : MonoBehaviour {
 
     }
     public void ScreenshotClick() {
-        
+        Debug.Log("Screenshot Clicked"); 
 
         LoadMenuCloseClick();
         if (!screenshotMenu.gameObject.activeSelf) {
@@ -80,6 +64,7 @@ public class MenuHandVRControls : MonoBehaviour {
         }
     }
     public void SceneryClick() {
+        Debug.Log("Scenery Clicked");
         //for (int count = 0; count < rooms.Length; count++) {
         //    if (rooms[count].activeSelf) {
         //        int nextCount = count + 1;
@@ -93,6 +78,7 @@ public class MenuHandVRControls : MonoBehaviour {
         //}
     }
     public void CloseClick() {
+        Debug.Log("Close Clicked");
         if (mainMenuGroup.gameObject.activeSelf) {
             LeanTween.alphaCanvas(mainMenuGroup, 0, 0.2f).setOnComplete(() => { mainMenuGroup.gameObject.SetActive(false); });
         }
@@ -103,6 +89,7 @@ public class MenuHandVRControls : MonoBehaviour {
     }
 
     public void LoadMenuCloseClick() {
+        Debug.Log("LoadMenu Close Clicked");
         //LeanTween.alphaCanvas(loadMenu, 0, 0.2f);
         //LeanTween.moveLocalX(loadMenu.gameObject, 400, 0.2f).setEaseInCubic().setOnComplete(() => { loadMenu.gameObject.SetActive(false); });
         //loadMenu.GetComponent<FileLoadMenu>()?.BeginDisable();
@@ -111,6 +98,7 @@ public class MenuHandVRControls : MonoBehaviour {
     }
 
     public void ScreenshotCloseClick() {
+        Debug.Log("Screenshot Close Clicked");
 		screenshot.SetActive (false);
         LeanTween.alphaCanvas(screenshotMenu, 0, 0.2f).setOnComplete(() => { screenshotMenu.gameObject.SetActive(false); });
         //LeanTween.moveLocalX(screenshotMenu.gameObject, 214, 0.2f).setEaseInCubic().setOnComplete(() => { screenshotMenu.gameObject.SetActive(false); });
@@ -118,11 +106,6 @@ public class MenuHandVRControls : MonoBehaviour {
 
     //Helpers
 	private Vector3 GetFrontOfCamera(float height = 1.2f) {
-        Transform headset = VRTK.VRTK_DeviceFinder.HeadsetCamera().transform;
-        Vector3 headsetForward = new Vector3(headset.forward.x, 0, headset.forward.z);
-        headsetForward.Normalize();
-        Vector3 finalPosition = headset.position + headsetForward * 0.6f;
-        return new Vector3(finalPosition.x, height, finalPosition.z);
+        return new Vector3(0, 0, 0);
     }
-    */
 }

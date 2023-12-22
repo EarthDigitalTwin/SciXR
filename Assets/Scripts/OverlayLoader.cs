@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Linq;
 using Debug = UnityEngine.Debug;
 using Proj4Net;
-using UnityEngine.Networking;
+using System;
 
 public class OverlayLoader
 {
@@ -67,6 +67,24 @@ public class OverlayLoader
     } 
 
 	public static IEnumerator LoadImageryFromBounds (Material material, string layerName, string projection, BBox bbox, string time) {
+        // For GIBS, time needs to be in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ format. Verify this:
+        string[] formats = { "yyyy-MM-ddHH:mm:ssZ", "yyyy-MM-dd" };
+        DateTime parsedTime;
+        if (DateTime.TryParseExact(time, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out parsedTime))
+        {
+            // do nothing: time is already in the correct format
+        }
+        else if (DateTime.TryParse(time, out parsedTime))
+        {
+            Debug.Log("Time was not in correct format: " + time + ". Parsed as: " + parsedTime.ToString("yyyy-MM-ddHH:mm:ssZ"));
+            time = parsedTime.ToString("yyyy-MM-ddHH:mm:ssZ");
+        }
+        else
+        {
+            Debug.Log("Unable to parse time string: " + time);
+            yield break;
+        }
+
         double[] bBox = { bbox.minX, bbox.minY, bbox.maxX, bbox.maxY };
         int scale = 1;
         if ((bbox.maxX / bbox.maxY) >= 2) {
@@ -78,17 +96,10 @@ public class OverlayLoader
 
         Texture2D texture;
         texture = new Texture2D(2048, 2048/scale);
-        using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(request.Url))
+        using (WWW www = new WWW(request.Url))
         {
-            yield return www.SendWebRequest();
-            if (www.isNetworkError || www.isHttpError)
-            {
-                Debug.Log(www.error);
-            }
-            else
-            {
-                texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-            }
+            yield return www;
+            www.LoadImageIntoTexture(texture);
             material.SetTexture("_MainTex", texture);
         }
     }
